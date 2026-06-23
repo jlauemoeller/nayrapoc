@@ -1,0 +1,1 @@
+ALTER TABLE "assumptions" RENAME COLUMN "description" TO "rationale";
