@@ -40,6 +40,7 @@ export default async function ClaimPage({ params }: ClaimPageParams) {
               <Image
                 src="/signup.jpg"
                 alt="Image"
+                fill={true}
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               />
             </div>
