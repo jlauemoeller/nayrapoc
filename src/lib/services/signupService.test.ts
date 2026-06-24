@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { eq } from "drizzle-orm";
-import { users, accounts, projects } from "@lib/db/schema";
+import { users, accounts, projects, decisions } from "@lib/db/schema";
 import { SignupService } from "@lib/services/signupService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createUser, createUserWithAccount } from "@lib/testing/factories";
+import { createUser, createUserWithAccount, createProject, createDecision } from "@lib/testing/factories";
+import { TEMPLATE_ACCOUNT_ID } from "@lib/templates/templateService";
 
 const { db } = setupTestDb();
 
@@ -44,6 +45,31 @@ describe("SignupService.claimAccount", () => {
 
     const projectRows = await db.select().from(projects);
     expect(projectRows).toHaveLength(0);
+  });
+
+  it("clones the template account's content into the new account", async () => {
+    const { user: templateUser } = await createUserWithAccount(db, {}, { id: TEMPLATE_ACCOUNT_ID });
+    const tProject = await createProject(db, TEMPLATE_ACCOUNT_ID, templateUser.id, { name: "Starter" });
+    await createDecision(db, tProject.id, templateUser.id, { title: "Starter Decision" });
+
+    const result = await SignupService.claimAccount(input, db);
+    expect(result.isOk()).toBe(true);
+    if (!result.isOk()) return;
+    const owner = result.value;
+
+    const ownerProjects = await db.select().from(projects).where(eq(projects.account_id, owner.account.id));
+    expect(ownerProjects).toHaveLength(1);
+    expect(ownerProjects[0].name).toBe("Starter");
+    expect(ownerProjects[0].creator_id).toBe(owner.id);
+
+    const ownerDecisions = await db.select().from(decisions).where(eq(decisions.project_id, ownerProjects[0].id));
+    expect(ownerDecisions).toHaveLength(1);
+    expect(ownerDecisions[0].title).toBe("Starter Decision");
+    expect(ownerDecisions[0].creator_id).toBe(owner.id);
+
+    // Template project remains plus the cloned one.
+    const allProjects = await db.select().from(projects);
+    expect(allProjects).toHaveLength(2);
   });
 
   it("rolls back the entire transaction when the email is already taken", async () => {

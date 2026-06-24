@@ -8,6 +8,7 @@ import { UserService, UserServiceError } from "@/lib/services/userService";
 import { db } from "@/lib/db";
 import { TenantUserSignupInput, User } from "@/lib/models/user";
 import { Account } from "@/lib/models/account";
+import { TemplateService } from "@/lib/templates/templateService";
 
 export type MarkClaimedError = "not_found";
 
@@ -43,6 +44,10 @@ export class SignupService {
 
         const assigned = await UserService.assignAccount(user.id, account.id, "owner", tx);
         if (assigned.isErr()) return err(assigned.error);
+
+        // Give the new account its own private copy of the demo starter content so
+        // reviewers land in a populated app. No-op when no template is seeded.
+        await TemplateService.cloneInto({ accountId: account.id, userId: user.id }, tx);
 
         const owner = await UserService.getWithAccount(account.ownerId, tx);
         if (!owner) {

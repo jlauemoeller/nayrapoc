@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
-import { users, accounts, projects, decisions } from "@lib/db/schema";
+import { users, accounts, projects, decisions, assumptions } from "@lib/db/schema";
 import type { DbConnection } from "@lib/db/connection";
 import type { UserRecord, NewUserRecord } from "@lib/models/user";
 import type { AccountRecord, NewAccountRecord } from "@lib/models/account";
 import type { ProjectRecord, NewProjectRecord } from "@lib/models/project";
 import type { DecisionRecord, NewDecisionRecord } from "@lib/models/decision";
+import type { AssumptionRecord, NewAssumptionRecord } from "@lib/models/assumption";
 
 let seq = 0;
 function next() {
@@ -114,4 +115,28 @@ export async function createDecision(
     })
     .returning();
   return decision;
+}
+
+// ---------------------------------------------------------------------------
+// Assumption factory
+// ---------------------------------------------------------------------------
+
+export async function createAssumption(
+  db: DbConnection,
+  decisionId: string,
+  creatorId: string,
+  overrides: Partial<NewAssumptionRecord> = {}
+): Promise<AssumptionRecord> {
+  const n = next();
+  const [assumption] = await db
+    .insert(assumptions)
+    .values({
+      title: `Test Assumption ${n}`,
+      rationale: null,
+      decision_id: decisionId,
+      creator_id: creatorId,
+      ...overrides
+    })
+    .returning();
+  return assumption;
 }
