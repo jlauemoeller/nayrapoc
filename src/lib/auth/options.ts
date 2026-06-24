@@ -29,14 +29,13 @@ export function getAuthOptions(): NextAuthOptions {
           server: appConfig.email.configuration.server,
           from: appConfig.email.configuration.from,
           async sendVerificationRequest({ identifier, url, provider }) {
-            const host = new URL(url).host;
             const transporter = nodemailer.createTransport(provider.server);
             await transporter.sendMail({
               to: identifier,
               from: provider.from,
-              subject: `Sign in to ${host}`,
-              text: `Sign in to ${host}\n\n${url}\n\nIf you did not request this email, you can safely ignore it.\n`,
-              html: magicLinkEmail({ url, host })
+              subject: `Sign in to Nayra`,
+              text: `Sign in to Nayra\n\n${url}\n\nIf you did not request this email, you can safely ignore it.\n`,
+              html: magicLinkEmail({ url })
             });
           }
         })
@@ -93,15 +92,14 @@ export function getAuthOptions(): NextAuthOptions {
   return _authOptions;
 }
 
-function magicLinkEmail({ url, host }: { url: string; host: string }): string {
-  const escapedHost = host.replace(/\./g, "&#8203;.");
+function magicLinkEmail({ url }: { url: string }): string {
   return `<!DOCTYPE html>
 <html>
   <body style="background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;">
     <table style="max-width:480px;margin:0 auto;background:#fff;border-radius:8px;padding:32px;">
       <tr><td>
-        <h1 style="margin:0 0 16px 0;font-size:20px;">Sign in to ${escapedHost}</h1>
-        <p style="margin:0 0 24px 0;color:#374151;">Click the button below to sign in. This link will expire shortly.</p>
+        <h1 style="margin:0 0 16px 0;font-size:20px;">Sign in to Nayra</h1>
+        <p style="margin:0 0 24px 0;color:#374151;">Click the button below to sign in to your Nayra account. This link will expire shortly.</p>
         <p style="margin:0 0 24px 0;">
           <a href="${url}" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:12px 20px;border-radius:6px;">Sign in</a>
         </p>
