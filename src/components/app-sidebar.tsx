@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NewProjectDialog } from "./new-project-dialog";
 import { Project } from "@/lib/models/project";
-import { ProjectIcon, ProjectsIcon, TeamIcon, LogoutIcon, AddIcon } from "./icons";
+import { AddIcon, LogoutIcon, OverviewIcon, ProjectIcon, ProjectsIcon, TeamIcon } from "./icons";
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +45,14 @@ export function AppSidebar({ accountId, projects, canCreateProjects }: AppSideba
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive("overview")}>
+                  <Link href="/overview">
+                    <OverviewIcon />
+                    <span>Overview</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive("projects")}>
                   <Link href="/projects">

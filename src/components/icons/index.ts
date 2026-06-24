@@ -12,6 +12,7 @@ export * from "./detail-icon";
 export * from "./error-icon";
 export * from "./logout-icon";
 export * from "./not-found-icon";
+export * from "./overview-icon";
 export * from "./project-icon";
 export * from "./project-start-icon";
 export * from "./projects-icon";
