@@ -21,7 +21,8 @@ export default async function OverviewPage() {
         <span className="uppercase text-destructive font-bold">THIS IS A DEMO</span>
       </p>
       <p>
-        <b>The app resets every hour</b> and all data added by users will be lost, including user accounts.
+        Your account is prepolulated with sample data to make evaluation easier but please note that{" "}
+        <b>the app resets every hour</b> &mdash; all data added by users will be lost, including user accounts.
       </p>
       <p>- Enjoy, Jacob</p>
     </div>
