@@ -8,3 +8,5 @@ meta
 dist
 *.tsbuildinfo
 .claude
+# The demo seed is bind-mounted at runtime, never baked into the image.
+db-dump.json

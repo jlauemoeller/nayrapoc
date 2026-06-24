@@ -14,8 +14,10 @@
 /coverage
 
 # db dump/load artifacts (see scripts/db-dump.ts, scripts/db-load.ts).
-# db-dump.json is the committed demo seed (shipped in the deploy image), so it
-# is intentionally tracked — regenerate it with `pnpm db:dump`.
+# db-dump.json is the demo seed: NOT committed and NOT baked into the image —
+# it's scp'd to the server and bind-mounted into the container at runtime (like
+# .env). Regenerate it with `pnpm db:dump`.
+/db-dump.json
 /dist
 
 # next.js
@@ -52,4 +54,7 @@ CLAUDE.md
 
 # Minio data files
 local/data/minio/
+
+# scp'ed to server
+db-dump.json
 
