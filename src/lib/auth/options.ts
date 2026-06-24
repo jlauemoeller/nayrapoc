@@ -74,7 +74,12 @@ export function getAuthOptions(): NextAuthOptions {
         async signIn({ user }) {
           if (!user.email) return false;
           const record = await UserRepository.getByEmail(user.email);
-          if (!record) return "/signup";
+          // Deny unknown emails. Returning a *relative* redirect string here
+          // (e.g. "/signup") makes NextAuth respond with `{ url: "/signup" }`,
+          // and the client's `new URL(data.url)` throws on the relative path.
+          // `false` yields an absolute `?error=AccessDenied` URL the client can
+          // parse; the login form turns that into a "no account, sign up" hint.
+          if (!record) return false;
 
           if (!record.claimed_at) {
             const result = await SignupService.markClaimed(record.id);

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
-type SubmitState = "idle" | "sending" | "sent" | "error";
+type SubmitState = "idle" | "sending" | "sent" | "no-account" | "error";
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const searchParams = useSearchParams();
@@ -24,8 +24,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     if (!email) return;
     setState("sending");
     try {
-      await signIn("email", { email, redirect: false, callbackUrl: "/start" });
-      setState("sent");
+      const result = await signIn("email", { email, redirect: false, callbackUrl: "/start" });
+      // With redirect:false, signIn resolves to a result object instead of
+      // navigating. `AccessDenied` is what the signIn callback's `return false`
+      // produces for an unknown email; any other `error` is a real send failure.
+      if (result?.error === "AccessDenied") {
+        setState("no-account");
+      } else if (result?.error) {
+        setState("error");
+      } else {
+        setState("sent");
+      }
     } catch (error) {
       console.error("Failed to send magic link", error);
       setState("error");
@@ -55,6 +64,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               {state === "sent" && (
                 <p className="rounded-md bg-muted p-3 text-sm">
                   Check your inbox at <strong>{email}</strong> for a sign-in link.
+                </p>
+              )}
+              {state === "no-account" && (
+                <p className="rounded-md bg-muted p-3 text-sm">
+                  We couldn&apos;t find an account for <strong>{email}</strong>.{" "}
+                  <Link href="/signup" className="underline">
+                    Sign up
+                  </Link>{" "}
+                  to get started.
                 </p>
               )}
               {state === "error" && (
