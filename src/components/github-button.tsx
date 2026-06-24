@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 export function GitHubButton() {
   return (
     <Button variant="outline" asChild>
-      <a href="https://github.com/jlauemoeller">
+      <a href="https://github.com/jlauemoeller/nayrapoc">
         <svg viewBox="0 0 438.549 438.549">
           <path
             fill="currentColor"
