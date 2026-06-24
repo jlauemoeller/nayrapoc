@@ -86,7 +86,7 @@ export function AppSidebar({ accountId, projects, canCreateProjects }: AppSideba
           </div>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {projects.length > 0 ?
+              {projects.length > 0 &&
                 projects.map((project: Project) => {
                   return (
                     <SidebarMenuItem key={project.id}>
@@ -98,8 +98,7 @@ export function AppSidebar({ accountId, projects, canCreateProjects }: AppSideba
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
-                })
-              : <span>Create your first project</span>}
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
