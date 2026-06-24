@@ -2,7 +2,8 @@ import { GitHubButton } from "@/components/github-button";
 
 export default function DefaultHeader() {
   return (
-    <div className="flex flex-row flex-1 justify-end">
+    <div className="flex flex-row flex-1 justify-between items-center">
+      <div className="font-bold text-destructive uppercase text-xs">This DEMO resets every hour</div>
       <GitHubButton />
     </div>
   );
