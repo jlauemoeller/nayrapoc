@@ -6,7 +6,7 @@ export default async function StartPage() {
   const session = await getServerSession(getAuthOptions());
 
   if (session?.user && session?.user.accountId) {
-    redirect(`/accounts/${session.user.accountId}/overview`);
+    redirect("/overview");
   }
 
   redirect("/login");
