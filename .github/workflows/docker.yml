@@ -10,5 +10,5 @@ jobs:
       - name: Build and push the image
         run: |
           docker login --username jlauemoeller --password ${{secrets.GHCR_NAYRA_PAT}} ghcr.io
-          docker build . --tag ghcr.io/iteray/nayra:latest
-          docker push ghcr.io/iteray/nayra:latest
+          docker build . --tag ghcr.io/iteray/nayrapoc:latest
+          docker push ghcr.io/iteray/nayrapoc:latest
