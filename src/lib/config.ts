@@ -10,7 +10,7 @@ import path from "path";
  * runners — get the same environment loading behaviour.
  *
  * Loading order (mirrors Next.js conventions):
- *   1. .env                    — base, committed
+ *   1. .env                    — base, optional, NOT committed
  *   2. .env.[NODE_ENV]         — environment-specific, committed
  *   3. .env.[NODE_ENV].local   — local overrides, NOT committed
  */
