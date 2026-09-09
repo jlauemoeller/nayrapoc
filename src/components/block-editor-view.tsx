@@ -6,6 +6,7 @@ import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/shadcn";
 import { requestUpload } from "@/lib/actions/uploadFile";
 import { useCreateBlockNote, useEditorChange } from "@blocknote/react";
+import { cn } from "cn";
 
 // BlockNote's image/video/audio/file blocks call this with the picked File and expect a URL
 // back. We presign against our object storage, PUT the file directly to it, then hand back the
@@ -33,9 +34,10 @@ interface BlockEditorViewProps {
   editable: boolean;
   id?: string;
   onValueChange?: (document: Block[]) => void;
+  className?: string;
 }
 
-export default function BlockEditorView({ initialContent, onValueChange, ...rest }: BlockEditorViewProps) {
+export default function BlockEditorView({ initialContent, onValueChange, className, ...rest }: BlockEditorViewProps) {
   const editor = useCreateBlockNote({
     // BlockNote rejects an empty array; pass undefined for a fresh document.
     initialContent: initialContent?.length ? initialContent : undefined,
@@ -53,7 +55,7 @@ export default function BlockEditorView({ initialContent, onValueChange, ...rest
   }, editor);
 
   return (
-    <div className="pt-2 pb-2 border rounded-xl min-w-100">
+    <div className={cn("pt-2 pb-2 border rounded-lg min-w-100", className)}>
       <BlockNoteView editor={editor} {...rest} />
     </div>
   );

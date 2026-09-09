@@ -17,6 +17,7 @@ interface BlockEditorProps {
   editable: boolean;
   id?: string;
   onValueChange?: (document: Block[]) => void;
+  className?: string;
 }
 
 export function BlockEditor({ ...props }: BlockEditorProps) {
