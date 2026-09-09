@@ -1,11 +1,12 @@
 import { eq } from "drizzle-orm";
-import { users, accounts, projects, decisions, assumptions } from "@lib/db/schema";
+import { users, accounts, projects, decisions, assumptions, assumptionComments } from "@lib/db/schema";
 import type { DbConnection } from "@lib/db/connection";
 import type { UserRecord, NewUserRecord } from "@lib/models/user";
 import type { AccountRecord, NewAccountRecord } from "@lib/models/account";
 import type { ProjectRecord, NewProjectRecord } from "@lib/models/project";
 import type { DecisionRecord, NewDecisionRecord } from "@lib/models/decision";
 import type { AssumptionRecord, NewAssumptionRecord } from "@lib/models/assumption";
+import type { AssumptionCommentRecord, NewAssumptionCommentRecord } from "@lib/models/assumptionComment";
 
 let seq = 0;
 function next() {
@@ -139,4 +140,29 @@ export async function createAssumption(
     })
     .returning();
   return assumption;
+}
+
+// ---------------------------------------------------------------------------
+// AssumptionComment factory
+// Unresolved by default; pass `{ resolver_id, resolved_at }` in overrides for a resolved one.
+// ---------------------------------------------------------------------------
+
+export async function createAssumptionComment(
+  db: DbConnection,
+  assumptionId: string,
+  creatorId: string,
+  overrides: Partial<NewAssumptionCommentRecord> = {}
+): Promise<AssumptionCommentRecord> {
+  const [assumptionComment] = await db
+    .insert(assumptionComments)
+    .values({
+      body: null,
+      assumption_id: assumptionId,
+      creator_id: creatorId,
+      resolver_id: null,
+      resolved_at: null,
+      ...overrides
+    })
+    .returning();
+  return assumptionComment;
 }

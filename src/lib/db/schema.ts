@@ -100,3 +100,20 @@ export const assumptions = pgTable("assumptions", {
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull()
 });
+
+export const assumptionComments = pgTable("assumption_comments", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  body: jsonb("body").$type<Block[]>(),
+  assumption_id: uuid("assumption_id")
+    .references(() => assumptions.id, { onDelete: "cascade" })
+    .notNull(),
+  creator_id: uuid("creator_id")
+    .references(() => users.id)
+    .notNull(),
+  resolver_id: uuid("resolver_id").references(() => users.id),
+  resolved_at: timestamp("resolved_at"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull()
+});

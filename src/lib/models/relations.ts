@@ -1,8 +1,9 @@
-import { AccountRecord, toAccount, type Account } from "@lib/models/account";
-import { AssumptionRecord, toAssumption, type Assumption } from "@lib/models/assumption";
-import { DecisionRecord, toDecision, type Decision } from "@lib/models/decision";
-import { ProjectRecord, toProject, type Project } from "@lib/models/project";
-import { UserRecord, toUser, type User } from "@lib/models/user";
+import { AccountRecord, toAccount, type Account } from "@/lib/models/account";
+import { AssumptionRecord, toAssumption, type Assumption } from "@/lib/models/assumption";
+import { AssumptionCommentRecord, toAssumptionComment, type AssumptionComment } from "@/lib/models/assumptionComment";
+import { DecisionRecord, toDecision, type Decision } from "@/lib/models/decision";
+import { ProjectRecord, toProject, type Project } from "@/lib/models/project";
+import { UserRecord, toUser, type User } from "@/lib/models/user";
 
 export type UserWithAccountResult = { user: UserRecord; account: AccountRecord };
 export type AccountWithOwnerResult = { account: AccountRecord; owner: UserRecord };
@@ -36,6 +37,35 @@ export type AssumptionWithDecisionCreatorAndProjectResult = {
   decision: DecisionRecord;
   project: ProjectRecord;
   creator: UserRecord;
+};
+
+export type AssumptionCommentWithAssumptionResult = {
+  assumptionComment: AssumptionCommentRecord;
+  assumption: AssumptionRecord;
+};
+
+export type AssumptionCommentWithCreatorResult = {
+  assumptionComment: AssumptionCommentRecord;
+  creator: UserRecord;
+};
+
+export type AssumptionCommentWithAssumptionAndCreatorResult = {
+  assumptionComment: AssumptionCommentRecord;
+  assumption: AssumptionRecord;
+  creator: UserRecord;
+};
+
+export type AssumptionCommentWithAssumptionCreatorAndResolverResult = {
+  assumptionComment: AssumptionCommentRecord;
+  assumption: AssumptionRecord;
+  creator: UserRecord;
+  resolver: UserRecord | null;
+};
+
+export type AssumptionCommentWithCreatorAndResolverResult = {
+  assumptionComment: AssumptionCommentRecord;
+  creator: UserRecord;
+  resolver: UserRecord | null;
 };
 
 export function toUserWithAccount(result: UserWithAccountResult): User<"with-account"> {
@@ -161,4 +191,68 @@ export function toAssumptionWithDecisionCreatorAndProjectIfAny(
   result: AssumptionWithDecisionCreatorAndProjectResult | undefined
 ): Assumption<"with-decision-creator-and-project"> | undefined {
   return result ? toAssumptionWithDecisionCreatorAndProject(result) : undefined;
+}
+
+export function toAssumptionCommentWithAssumption(
+  result: AssumptionCommentWithAssumptionResult
+): AssumptionComment<"with-assumption"> {
+  return {
+    ...toAssumptionComment(result.assumptionComment),
+    assumption: toAssumption(result.assumption)
+  };
+}
+
+export function toAssumptionCommentWithAssumptionIfAny(
+  result: AssumptionCommentWithAssumptionResult | undefined
+): AssumptionComment<"with-assumption"> | undefined {
+  return result ? toAssumptionCommentWithAssumption(result) : undefined;
+}
+
+export function toAssumptionCommentWithAssumptionAndCreator(
+  result: AssumptionCommentWithAssumptionAndCreatorResult
+): AssumptionComment<"with-assumption-and-creator"> {
+  return {
+    ...toAssumptionComment(result.assumptionComment),
+    assumption: toAssumption(result.assumption),
+    creator: toUser(result.creator)
+  };
+}
+
+export function toAssumptionCommentWithAssumptionAndCreatorIfAny(
+  result: AssumptionCommentWithAssumptionAndCreatorResult | undefined
+): AssumptionComment<"with-assumption-and-creator"> | undefined {
+  return result ? toAssumptionCommentWithAssumptionAndCreator(result) : undefined;
+}
+
+export function toAssumptionCommentWithAssumptionCreatorAndResolver(
+  result: AssumptionCommentWithAssumptionCreatorAndResolverResult
+): AssumptionComment<"with-assumption-creator-and-resolver"> {
+  return {
+    ...toAssumptionComment(result.assumptionComment),
+    assumption: toAssumption(result.assumption),
+    creator: toUser(result.creator),
+    resolver: result.resolver ? toUser(result.resolver) : undefined
+  };
+}
+
+export function toAssumptionCommentWithAssumptionCreatorAndResolverIfAny(
+  result: AssumptionCommentWithAssumptionCreatorAndResolverResult | undefined
+): AssumptionComment<"with-assumption-creator-and-resolver"> | undefined {
+  return result ? toAssumptionCommentWithAssumptionCreatorAndResolver(result) : undefined;
+}
+
+export function toAssumptionCommentWithCreatorAndResolver(
+  result: AssumptionCommentWithCreatorAndResolverResult
+): AssumptionComment<"with-creator-and-resolver"> {
+  return {
+    ...toAssumptionComment(result.assumptionComment),
+    creator: toUser(result.creator),
+    resolver: result.resolver ? toUser(result.resolver) : undefined
+  };
+}
+
+export function toAssumptionCommentWithCreatorAndResolverIfAny(
+  result: AssumptionCommentWithCreatorAndResolverResult | undefined
+): AssumptionComment<"with-creator-and-resolver"> | undefined {
+  return result ? toAssumptionCommentWithCreatorAndResolver(result) : undefined;
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { AssumptionCommentList } from "@/components/assumption-comment-list";
 import { AssumptionConfidenceEditor } from "@/components/assumption-confidence-editor";
 import { AssumptionRationaleEditor } from "@/components/assumption-rationale-editor";
+import { AssumptionRationaleAIEvaluation } from "@/components/assumption-rationale-ai-evaluation";
 import { AssumptionService } from "@/lib/services/assumptionService";
 import { AssumptionTitleEditor } from "@/components/assumption-title-editor";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -11,6 +13,7 @@ import { PageTitle } from "@/components/page-title";
 import { canViewAssumption, canUpdateAssumption, canDeleteAssumption } from "@/lib/policies/assumption";
 import { currentUser, assertAuthorized } from "@/lib/authorization";
 import { redirect } from "next/navigation";
+import { AssumptionCommentService } from "@/lib/services/assumptionCommentService";
 
 type AssumptionPageParams = {
   params: Promise<{ assumption_id: string }>;
@@ -27,6 +30,8 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
   const actor = await currentUser();
   assertAuthorized(canViewAssumption, actor, assumption);
   const editable = canUpdateAssumption(actor, assumption);
+
+  const comments = await AssumptionCommentService.listForAssumptionWithCreatorAndResolver(assumption.id);
 
   const breadcrumbs = [
     { name: assumption.decision.project.name, link: `/projects/${assumption.decision.projectId}` },
@@ -55,13 +60,16 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
       <h3>Confidence</h3>
       <div className="mb-2">How confident are we that this assumption holds?</div>
       <AssumptionConfidenceEditor assumption={assumption} editable={editable} />
-      <div className="flex flex-col gap-4 mt-6">
+      <div className="flex flex-col gap-4 mt-6 mb-2">
         <div className="flex flex-row gap-4 items-baseline">
           <h3>Rationale</h3>
           {editable && <span className="text-muted-foreground text-xs">(Click and type to edit)</span>}
         </div>
         <AssumptionRationaleEditor assumption={assumption} editable={editable} />
+        <AssumptionRationaleAIEvaluation />
       </div>
+      <h3 className="mb-4">Discussion</h3>
+      <AssumptionCommentList actor={actor} assumption={assumption} initialComments={comments} />
     </div>
   );
 }

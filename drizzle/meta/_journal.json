@@ -71,6 +71,13 @@
       "when": 1781515731881,
       "tag": "0009_heavy_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788701927267,
+      "tag": "0010_giant_iron_patriot",
+      "breakpoints": true
     }
   ]
 }
