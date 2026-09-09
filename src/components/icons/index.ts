@@ -1,5 +1,6 @@
 export * from "./accept-icon";
 export * from "./add-icon";
+export * from "./agent-icon";
 export * from "./assumption-icon";
 export * from "./cancel-icon";
 export * from "./check-icon";
