@@ -3,7 +3,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 function pluralize(n: number, word: string) {
@@ -208,7 +208,7 @@ function RelativeTimeCard(props: RelativeTimeCardProps) {
         avoidCollisions={avoidCollisions}
         collisionBoundary={collisionBoundary}
         collisionPadding={collisionPadding}
-        className="flex w-full max-w-[420px] flex-col gap-2 p-3"
+        className="flex w-full max-w-105 flex-col gap-2 p-3"
       >
         <time dateTime={date.toISOString()} className="text-muted-foreground text-sm">
           {formattedTime}
