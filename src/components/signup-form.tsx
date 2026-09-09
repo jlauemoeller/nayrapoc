@@ -8,7 +8,7 @@ import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
 import { Form, FormField, FormLabel, FormControl, FormMessage, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { applyActionError } from "@/lib/forms";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { signIn } from "next-auth/react";
 import { signupTenantUser } from "@/lib/actions/signup";
 import { tenantUserSignupSchema, TenantUserSignupInput } from "@/lib/models/user";

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
