@@ -94,44 +94,6 @@ describe("DecisionRepository", () => {
 
   // -------------------------------------------------------------------------
 
-  describe("listWithProjectAndCreatorForProject", () => {
-    it("returns decisions with their project and creator, scoped to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-      const otherProject = await createProject(db, account.id, user.id);
-      const mine = await createDecision(db, project.id, user.id);
-      await createDecision(db, otherProject.id, user.id);
-
-      const result = await DecisionRepository.listWithProjectAndCreatorForProject(project.id, db);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].decision.id).toBe(mine.id);
-      expect(result[0].project.id).toBe(project.id);
-      expect(result[0].creator.id).toBe(user.id);
-    });
-
-    it("returns decisions newest first", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-      const older = await createDecision(db, project.id, user.id, { created_at: new Date("2026-01-01") });
-      const newer = await createDecision(db, project.id, user.id, { created_at: new Date("2026-02-01") });
-
-      const result = await DecisionRepository.listWithProjectAndCreatorForProject(project.id, db);
-
-      expect(result.map((r) => r.decision.id)).toEqual([older.id, newer.id]);
-    });
-
-    it("returns an empty array when the project has no decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-
-      const result = await DecisionRepository.listWithProjectAndCreatorForProject(project.id, db);
-      expect(result).toEqual([]);
-    });
-  });
-
-  // -------------------------------------------------------------------------
-
   describe("get", () => {
     it("returns the decision when found", async () => {
       const { user, account } = await createUserWithAccount(db);

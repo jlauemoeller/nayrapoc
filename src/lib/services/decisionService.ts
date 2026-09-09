@@ -15,7 +15,6 @@ import {
 import {
   toDecisionWithCreator,
   toDecisionWithCreatorIfAny,
-  toDecisionWithProjectAndCreator,
   toDecisionWithProjectAndCreatorIfAny,
   toDecisionWithProjectIfAny
 } from "@/lib/models/relations";
@@ -72,14 +71,6 @@ export class DecisionService {
   ): Promise<Decision<"with-creator">[]> {
     const records = await DecisionRepository.listWithCreatorForProject(projectId, connection);
     return records.map(toDecisionWithCreator);
-  }
-
-  static async listWithProjectAndCreatorForProject(
-    projectId: string,
-    connection: DbConnection = db
-  ): Promise<Decision<"with-project-and-creator">[]> {
-    const records = await DecisionRepository.listWithProjectAndCreatorForProject(projectId, connection);
-    return records.map(toDecisionWithProjectAndCreator);
   }
 
   static async create(

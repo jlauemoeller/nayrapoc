@@ -101,23 +101,6 @@ export class DecisionRepository {
       .orderBy(asc(decisions.created_at));
   }
 
-  static async listWithProjectAndCreatorForProject(
-    projectId: string,
-    connection: DbConnection = db
-  ): Promise<DecisionWithProjectAndCreatorResult[]> {
-    return await connection
-      .select({
-        decision: decisions,
-        project: projects,
-        creator: users
-      })
-      .from(decisions)
-      .innerJoin(projects, eq(projects.id, decisions.project_id))
-      .innerJoin(users, eq(users.id, decisions.creator_id))
-      .where(eq(decisions.project_id, projectId))
-      .orderBy(asc(decisions.created_at));
-  }
-
   static async create(
     decisionData: NewDecisionRecord,
     connection: DbConnection = db

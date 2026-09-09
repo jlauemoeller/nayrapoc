@@ -155,33 +155,6 @@ describe("DecisionService", () => {
 
   // -------------------------------------------------------------------------
 
-  describe("listWithProjectAndCreatorForProject", () => {
-    it("returns project-and-creator-joined decisions scoped to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-      const otherProject = await createProject(db, account.id, user.id);
-      const mine = await createDecision(db, project.id, user.id);
-      await createDecision(db, otherProject.id, user.id);
-
-      const result = await DecisionService.listWithProjectAndCreatorForProject(project.id, db);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(mine.id);
-      expect(result[0].project.id).toBe(project.id);
-      expect(result[0].creator.id).toBe(user.id);
-    });
-
-    it("returns an empty array when the project has no decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-
-      const result = await DecisionService.listWithProjectAndCreatorForProject(project.id, db);
-      expect(result).toEqual([]);
-    });
-  });
-
-  // -------------------------------------------------------------------------
-
   describe("create", () => {
     it("returns Ok(decision) with camelCase domain fields", async () => {
       const { user, account } = await createUserWithAccount(db);

@@ -31,7 +31,7 @@ export default async function ProjectPage({ params }: ProjectPageParams) {
 
   const editable = canUpdateProject(actor, project);
   const breadcrumbs = [{ name: "Projects", link: `/projects` }];
-  const decisions = await DecisionService.listWithProjectAndCreatorForProject(project.id);
+  const decisions = await DecisionService.listWithCreatorForProject(project.id);
   const decisionsToReview = decisions.filter((decision) => decision.reviewBy);
 
   return (
