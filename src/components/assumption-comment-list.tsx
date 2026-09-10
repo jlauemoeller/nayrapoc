@@ -8,7 +8,11 @@ import { AssumptionCommentEditor } from "@/components/assumption-comment-editor"
 import { SessionUser } from "@/lib/models/user";
 import { canDeleteAssumptionComment } from "@/lib/policies/assumptionComment";
 import { canUpdateAssumption } from "@/lib/policies/assumption";
-import { createAssumptionComment, deleteAssumptionComment } from "@/lib/actions/assumptionComment";
+import {
+  createAssumptionComment,
+  deleteAssumptionComment,
+  updateAssumptionCommentResolutionState
+} from "@/lib/actions/assumptionComment";
 import { useState } from "react";
 
 type AssumptionCommentWithPreloads = Parameters<typeof AssumptionCommentView>[0]["comment"];
@@ -35,9 +39,15 @@ export function AssumptionCommentList({ actor, assumption, initialComments }: As
     setComments((prev) => prev.filter((c) => c.id != id));
   };
 
+  const handleResolutionChange = async function (id: string, state: boolean) {
+    const result = await updateAssumptionCommentResolutionState(id, state);
+    if (!result.success) return showErrorToast("Could not change comment resolution state");
+    setComments((prev) => prev.map((c) => (c.id == id ? result.data : c)));
+  };
+
   return (
     <div className="flex flex-col">
-      {content(actor, handleDelete, assumption, comments)}
+      {content(actor, handleDelete, handleResolutionChange, assumption, comments)}
       {editable ?
         <div className="border rounded-lg p-4 bg-muted">
           <h3 className="mb-2">Leave a Comment</h3>
@@ -51,11 +61,12 @@ export function AssumptionCommentList({ actor, assumption, initialComments }: As
 function content(
   actor: SessionUser,
   handleDelete: (id: string) => void,
+  handleResolutionChange: (id: string, state: boolean) => void,
   assumption: Assumption<"with-decision-and-project">,
   comments: AssumptionCommentWithPreloads[]
 ) {
   if (comments.length > 0) {
-    const items = comments.map((c) => item(actor, handleDelete, assumption, c));
+    const items = comments.map((c) => item(actor, handleDelete, handleResolutionChange, assumption, c));
     return <div className="flex flex-col">{items}</div>;
   } else {
     return <div>No comments yet</div>;
@@ -65,6 +76,7 @@ function content(
 function item(
   actor: SessionUser,
   handleDelete: (id: string) => void,
+  handleResolutionChange: (id: string, state: boolean) => void,
   assumption: Assumption<"with-decision-and-project">,
   comment: AssumptionCommentWithPreloads
 ) {
@@ -72,7 +84,12 @@ function item(
 
   return (
     <div key={comment.id} className="flex flex-col">
-      <AssumptionCommentView deletable={canDelete} onDelete={handleDelete} comment={comment} />
+      <AssumptionCommentView
+        deletable={canDelete}
+        onDelete={handleDelete}
+        onResolutionChange={handleResolutionChange}
+        comment={comment}
+      />
       <div className="ml-4 h-8 border-l">&nbsp;</div>
     </div>
   );

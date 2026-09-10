@@ -219,6 +219,100 @@ describe("AssumptionCommentService", () => {
   // -------------------------------------------------------------------------
 
   describe("update", () => {
+    it("persists the body and round-trips it unchanged", async () => {
+      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+
+      const result = await AssumptionCommentService.update(unresolvedComment.id, { body: sampleBody }, db);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.body).toEqual(sampleBody);
+      }
+
+      const reloaded = await AssumptionCommentService.get(unresolvedComment.id, db);
+      expect(reloaded!.body).toEqual(sampleBody);
+    });
+
+    // Resolving is the main reason `update` exists: camelCase input must land in the
+    // snake_case `resolved_at` / `resolver_id` columns. A silently dropped rename would
+    // still return Ok, so we read the row back rather than trust the return value alone.
+    it("persists resolvedAt and resolverId when resolving a comment", async () => {
+      const { resolver, unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const resolvedAt = new Date("2026-03-01T10:00:00Z");
+
+      const result = await AssumptionCommentService.update(
+        unresolvedComment.id,
+        { resolvedAt, resolverId: resolver.id },
+        db
+      );
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.resolverId).toBe(resolver.id);
+        expect(result.value.resolvedAt?.getTime()).toBe(resolvedAt.getTime());
+      }
+
+      const reloaded = await AssumptionCommentService.get(unresolvedComment.id, db);
+      expect(reloaded!.resolverId).toBe(resolver.id);
+      expect(reloaded!.resolvedAt?.getTime()).toBe(resolvedAt.getTime());
+    });
+
+    // `null` clears a column; `undefined` is skipped by Drizzle's `.set()` and would be a no-op.
+    it("clears resolvedAt and resolverId when unresolving a comment with null", async () => {
+      const { resolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+
+      const result = await AssumptionCommentService.update(
+        resolvedComment.id,
+        { resolvedAt: null, resolverId: null },
+        db
+      );
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.resolverId).toBeUndefined();
+        expect(result.value.resolvedAt).toBeUndefined();
+      }
+
+      const reloaded = await AssumptionCommentService.get(resolvedComment.id, db);
+      expect(reloaded!.resolverId).toBeUndefined();
+      expect(reloaded!.resolvedAt).toBeUndefined();
+    });
+
+    it("leaves omitted fields untouched", async () => {
+      const { resolver, resolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+
+      const result = await AssumptionCommentService.update(resolvedComment.id, { body: sampleBody }, db);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.resolverId).toBe(resolver.id);
+        expect(result.value.resolvedAt?.getTime()).toBe(resolvedComment.resolved_at!.getTime());
+      }
+    });
+
+    it("bumps updatedAt", async () => {
+      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+
+      const result = await AssumptionCommentService.update(unresolvedComment.id, { body: sampleBody }, db);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.updatedAt.getTime()).toBeGreaterThan(unresolvedComment.updated_at.getTime());
+      }
+    });
+
+    it("throws when the resolver does not exist", async () => {
+      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+
+      await expect(
+        AssumptionCommentService.update(
+          unresolvedComment.id,
+          { resolvedAt: new Date(), resolverId: "00000000-0000-7000-8000-000000000000" },
+          db
+        )
+      ).rejects.toThrow();
+    });
+
     it("throws when the comment does not exist", async () => {
       await expect(AssumptionCommentService.update("00000000-0000-7000-8000-000000000000", {}, db)).rejects.toThrow(
         "update failed"

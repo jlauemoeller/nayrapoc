@@ -12,7 +12,8 @@ import {
   AssumptionCommentUpdateInput,
   toAssumptionComment,
   toAssumptionCommentIfAny,
-  toNewAssumptionCommentRecord
+  toAssumptionCommentUpdateRecord,
+  toAssumptionCommentCreateRecord
 } from "@/lib/models/assumptionComment";
 import {
   toAssumptionCommentWithAssumptionIfAny,
@@ -65,7 +66,7 @@ export class AssumptionCommentService {
     input: AssumptionCommentCreateInput,
     connection: DbConnection = db
   ): Promise<Result<AssumptionComment, AssumptionCommentServiceError>> {
-    const assumptionCommentData = toNewAssumptionCommentRecord(input);
+    const assumptionCommentData = toAssumptionCommentCreateRecord(input);
     const record = await AssumptionCommentRepository.create(assumptionCommentData, connection);
     return record.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
   }
@@ -75,7 +76,8 @@ export class AssumptionCommentService {
     input: AssumptionCommentUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<AssumptionComment, AssumptionCommentServiceError>> {
-    const updated = await AssumptionCommentRepository.update(assumptionCommentId, input, connection);
+    const assumptionCommentData = toAssumptionCommentUpdateRecord(input);
+    const updated = await AssumptionCommentRepository.update(assumptionCommentId, assumptionCommentData, connection);
     return updated.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
   }
 

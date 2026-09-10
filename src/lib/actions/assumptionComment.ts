@@ -27,6 +27,8 @@ import { currentUser, isAuthorized } from "@/lib/authorization";
 import { AssumptionService } from "@/lib/services/assumptionService";
 import { transactionResult } from "../db/connection";
 import { Result, err, ok } from "neverthrow";
+import { db } from "@/lib/db";
+import { DbConnection } from "@/lib/db/connection";
 
 type AssumptionCommentCreateInputWithoutActor = Omit<AssumptionCommentCreateInput, "creatorId">;
 
@@ -57,13 +59,7 @@ export async function createAssumptionComment(
       const basic = await AssumptionCommentService.create(validated.data, tx);
       if (basic.isErr()) return err(basic.error);
 
-      const withPreloads = await AssumptionCommentService.getWithAssumptionCreatorAndResolver(basic.value.id, tx);
-
-      if (withPreloads) return ok(withPreloads);
-
-      // This should never happen. It means that we failed to load relations for the
-      // comment we just created in the same transaction. Panic.
-      throw new Error("Could not preload fields for new assumption comment");
+      return ok(await preloadCreatorAndResolverOrThrow(basic.value.id, tx));
     }
   );
 
@@ -97,6 +93,59 @@ export async function updateAssumptionComment(
 
   const result = await AssumptionCommentService.update(assumptionCommentId, validated.data);
   return actionResult(result, assumptionCommentUpdateSchema.keyof().options);
+}
+
+export async function updateAssumptionCommentResolutionState(
+  assumptionCommentId: string,
+  state: boolean
+): Promise<
+  ActionResult<AssumptionComment<"with-creator-and-resolver">, FieldError<keyof AssumptionCommentUpdateInput | "root">>
+> {
+  const actor = await currentUser();
+  const existing = await AssumptionCommentService.get(assumptionCommentId);
+
+  if (!existing) {
+    return notAuthorized();
+  }
+
+  const assumption = await AssumptionService.getWithDecisionAndProject(existing.assumptionId);
+
+  if (!assumption || !isAuthorized(canUpdateAssumptionComment, actor, assumption, existing)) {
+    return notAuthorized();
+  }
+
+  const currentState = existing.resolvedAt !== undefined;
+
+  if (state === currentState) {
+    return actionResult(
+      ok(await preloadCreatorAndResolverOrThrow(assumptionCommentId)),
+      assumptionCommentUpdateSchema.keyof().options
+    );
+  }
+
+  // `null` clears the columns; `undefined` would be skipped by Drizzle and leave the comment resolved.
+  const changes: AssumptionCommentUpdateInput =
+    state ? { resolvedAt: new Date(), resolverId: actor.id } : { resolvedAt: null, resolverId: null };
+
+  const result = await transactionResult(
+    async (tx): Promise<Result<AssumptionComment<"with-creator-and-resolver">, AssumptionCommentServiceError>> => {
+      const basic = await AssumptionCommentService.update(assumptionCommentId, changes, tx);
+      if (basic.isErr()) return err(basic.error);
+
+      return ok(await preloadCreatorAndResolverOrThrow(basic.value.id, tx));
+    }
+  );
+
+  return actionResult(result, assumptionCommentUpdateSchema.keyof().options);
+}
+
+async function preloadCreatorAndResolverOrThrow(
+  id: string,
+  connection: DbConnection = db
+): Promise<AssumptionComment<"with-creator-and-resolver">> {
+  const result = await AssumptionCommentService.getWithAssumptionCreatorAndResolver(id, connection);
+  if (!result) throw new Error(`Could not preload creator and resolver for AssumptionComment ${id}`);
+  return result;
 }
 
 export async function deleteAssumptionComment(
