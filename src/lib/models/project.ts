@@ -88,7 +88,7 @@ export function toProject(record: ProjectRecord): Project<"basic"> {
   };
 }
 
-export function toNewProjectRecord(
+export function toProjectCreateRecord(
   input: ProjectCreateInput
 ): Omit<NewProjectRecord, "id" | "created_at" | "updated_at"> {
   return {

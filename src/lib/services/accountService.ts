@@ -10,7 +10,7 @@ import {
   AccountUpdateInput,
   toAccount,
   toAccountIfAny,
-  toNewAccountRecord
+  toAccountCreateRecord
 } from "@/lib/models/account";
 
 export type AccountServiceError = ServiceError<Account>;
@@ -53,7 +53,7 @@ export class AccountService {
       owner_id: input.ownerId
     };
 
-    const accountData = toNewAccountRecord(normalized);
+    const accountData = toAccountCreateRecord(normalized);
     const record = await AccountRepository.create(accountData, connection);
     return record.map(toAccount).orElse(toAccountServiceErrorResult);
   }

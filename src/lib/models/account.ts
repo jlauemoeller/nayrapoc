@@ -62,7 +62,7 @@ export function toAccountIfAny(record: AccountRecord | undefined): Account<"basi
   return undefined;
 }
 
-export function toNewAccountRecord(
+export function toAccountCreateRecord(
   input: AccountCreateInput
 ): Omit<NewAccountRecord, "id" | "created_at" | "updated_at"> {
   return {

@@ -10,7 +10,7 @@ import {
   DecisionUpdateInput,
   toDecision,
   toDecisionIfAny,
-  toNewDecisionRecord
+  toDecisionCreateRecord
 } from "@/lib/models/decision";
 import {
   toDecisionWithCreator,
@@ -82,7 +82,7 @@ export class DecisionService {
       title: input.title.trim()
     };
 
-    const decisionData = toNewDecisionRecord(normalized);
+    const decisionData = toDecisionCreateRecord(normalized);
     const record = await DecisionRepository.create(decisionData, connection);
     return record.map(toDecision).orElse(toDecisionServiceErrorResult);
   }

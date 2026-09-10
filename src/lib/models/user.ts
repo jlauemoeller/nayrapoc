@@ -112,7 +112,7 @@ export function toUserIfAny(record: UserRecord | undefined): User<"basic"> | und
   return undefined;
 }
 
-export function toNewTenantUserRecord(
+export function toTenantUserCreateRecord(
   input: TenantUserCreateInput
 ): Omit<NewUserRecord, "id" | "created_at" | "updated_at" | "claimed_at"> {
   return {

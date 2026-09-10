@@ -9,7 +9,7 @@ import {
   TenantUserUpdateInput,
   User,
   UserRole,
-  toNewTenantUserRecord,
+  toTenantUserCreateRecord,
   toUser,
   toUserIfAny
 } from "@/lib/models/user";
@@ -66,7 +66,7 @@ export class UserService {
       domain: "tenant"
     };
 
-    const userData = toNewTenantUserRecord(normalized);
+    const userData = toTenantUserCreateRecord(normalized);
     const record = await UserRepository.create(userData, connection);
     return record.map(toUser).orElse(toUserServiceErrorResult);
   }

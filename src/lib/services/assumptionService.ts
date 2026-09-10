@@ -10,7 +10,7 @@ import {
   AssumptionUpdateInput,
   toAssumption,
   toAssumptionIfAny,
-  toNewAssumptionRecord
+  toAssumptionCreateRecord
 } from "@/lib/models/assumption";
 import {
   toAssumptionWithDecisionAndCreator,
@@ -91,7 +91,7 @@ export class AssumptionService {
       title: input.title.trim()
     };
 
-    const assumptionData = toNewAssumptionRecord(normalized);
+    const assumptionData = toAssumptionCreateRecord(normalized);
     const record = await AssumptionRepository.create(assumptionData, connection);
     return record.map(toAssumption).orElse(toAssumptionServiceErrorResult);
   }

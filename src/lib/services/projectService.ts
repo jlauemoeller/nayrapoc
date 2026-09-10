@@ -9,7 +9,7 @@ import {
   ProjectCreateInput,
   ProjectDecisionCounts,
   ProjectUpdateInput,
-  toNewProjectRecord,
+  toProjectCreateRecord,
   toProject,
   toProjectDecisionCounts,
   toProjectIfAny
@@ -78,7 +78,7 @@ export class ProjectService {
       account_id: input.accountId
     };
 
-    const projectData = toNewProjectRecord(normalized);
+    const projectData = toProjectCreateRecord(normalized);
     const record = await ProjectRepository.create(projectData, connection);
     return record.map(toProject).orElse(toProjectServiceErrorResult);
   }

@@ -89,7 +89,7 @@ export function toAssumption(record: AssumptionRecord): Assumption<"basic"> {
   };
 }
 
-export function toNewAssumptionRecord(
+export function toAssumptionCreateRecord(
   input: AssumptionCreateInput
 ): Omit<NewAssumptionRecord, "id" | "created_at" | "updated_at"> {
   return {

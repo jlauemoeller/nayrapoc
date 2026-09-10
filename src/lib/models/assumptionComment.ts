@@ -49,7 +49,14 @@ export const assumptionCommentCreateSchema = z.object({
 // line up on both sides.
 export const assumptionCommentFormSchema = assumptionCommentCreateSchema.pick({});
 
-export const assumptionCommentUpdateSchema = z.object({ body: bodyDocument.optional() });
+// `null` and `undefined` mean different things on update: `null` clears the column,
+// `undefined` (or an omitted key) leaves it alone — Drizzle skips undefined values in
+// `.set()`. Unresolving a comment therefore has to send `null`, so these are nullable.
+export const assumptionCommentUpdateSchema = z.object({
+  body: bodyDocument.optional(),
+  resolvedAt: z.date().nullable().optional(),
+  resolverId: z.uuid().nullable().optional()
+});
 
 // Domain schemas
 
@@ -92,13 +99,23 @@ export function toAssumptionComment(record: AssumptionCommentRecord): Assumption
   };
 }
 
-export function toNewAssumptionCommentRecord(
+export function toAssumptionCommentCreateRecord(
   input: AssumptionCommentCreateInput
 ): Omit<NewAssumptionCommentRecord, "id" | "created_at" | "updated_at"> {
   return {
     body: input.body,
     assumption_id: input.assumptionId,
     creator_id: input.creatorId,
+    resolver_id: input.resolverId,
+    resolved_at: input.resolvedAt
+  };
+}
+
+export function toAssumptionCommentUpdateRecord(
+  input: AssumptionCommentUpdateInput
+): Partial<Pick<NewAssumptionCommentRecord, "body" | "resolver_id" | "resolved_at">> {
+  return {
+    body: input.body,
     resolver_id: input.resolverId,
     resolved_at: input.resolvedAt
   };

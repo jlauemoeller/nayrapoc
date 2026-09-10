@@ -91,7 +91,7 @@ export function toDecision(record: DecisionRecord): Decision<"basic"> {
   };
 }
 
-export function toNewDecisionRecord(
+export function toDecisionCreateRecord(
   input: DecisionCreateInput
 ): Omit<NewDecisionRecord, "id" | "created_at" | "updated_at"> {
   return {
