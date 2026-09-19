@@ -100,17 +100,6 @@ describe("AccountService", () => {
       }
     });
 
-    it("trims whitespace from name", async () => {
-      const owner = await createUser(db);
-
-      const result = await AccountService.create({ name: "  Acme Corp  ", ownerId: owner.id }, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.name).toBe("Acme Corp");
-      }
-    });
-
     // A non-existent owner is an "unexpected" FK violation: no handler is registered, so it
     // surfaces as an exception rather than a typed Err.
     it("throws when owner does not exist", async () => {
@@ -124,44 +113,19 @@ describe("AccountService", () => {
 
   describe("update", () => {
     it("returns Ok(account) with updated name", async () => {
-      const { user, account } = await createUserWithAccount(db);
-
-      const result = await AccountService.update(account.id, { name: "Updated Name", ownerId: user.id }, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.name).toBe("Updated Name");
-      }
-    });
-
-    it("trims whitespace from name on update", async () => {
-      const { user, account } = await createUserWithAccount(db);
-
-      const result = await AccountService.update(account.id, { name: "  Updated Name  ", ownerId: user.id }, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.name).toBe("Updated Name");
-      }
-    });
-
-    it("updates the owner", async () => {
       const { account } = await createUserWithAccount(db);
-      const newOwner = await createUser(db);
 
-      const result = await AccountService.update(account.id, { name: "Acme Corp", ownerId: newOwner.id }, db);
+      const result = await AccountService.update(account.id, { name: "Updated Name" }, db);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.ownerId).toBe(newOwner.id);
+        expect(result.value.name).toBe("Updated Name");
       }
     });
 
     it("throws when the account does not exist", async () => {
-      const owner = await createUser(db);
-
       await expect(
-        AccountService.update("00000000-0000-7000-8000-000000000000", { name: "Acme Corp", ownerId: owner.id }, db)
+        AccountService.update("00000000-0000-7000-8000-000000000000", { name: "Acme Corp" }, db)
       ).rejects.toThrow("update failed");
     });
   });

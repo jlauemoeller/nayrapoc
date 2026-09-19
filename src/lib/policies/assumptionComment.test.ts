@@ -66,6 +66,7 @@ function assumption(
     creatorId: USER_ID,
     createdAt: new Date(),
     updatedAt: new Date(),
+    rationaleUpdatedAt: new Date(),
     decision: decision(),
     ...overrides
   };
@@ -83,7 +84,8 @@ function comment(overrides: Partial<AssumptionComment> = {}): AssumptionComment 
 }
 
 // Shorthand for "the assumption lives in someone else's account".
-const otherAccountAssumption = () => assumption({ decision: decision({ project: project({ accountId: OTHER_ACCOUNT_ID }) }) });
+const otherAccountAssumption = () =>
+  assumption({ decision: decision({ project: project({ accountId: OTHER_ACCOUNT_ID }) }) });
 
 describe("canListAssumptionComments", () => {
   it.each<UserRole>(["owner", "admin", "member"])("allows tenant %s of the assumption's account", (role) => {

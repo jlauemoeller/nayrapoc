@@ -180,25 +180,6 @@ describe("DecisionService", () => {
       }
     });
 
-    it("trims whitespace from title", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-
-      const result = await DecisionService.create(
-        {
-          title: "  Use Postgres  ",
-          projectId: project.id,
-          creatorId: user.id
-        },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.title).toBe("Use Postgres");
-      }
-    });
-
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when project does not exist", async () => {
@@ -246,19 +227,6 @@ describe("DecisionService", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.title).toBe("New");
-      }
-    });
-
-    it("trims whitespace from title on update", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-      const decision = await createDecision(db, project.id, user.id);
-
-      const result = await DecisionService.update(decision.id, { title: "  Trimmed  " }, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.title).toBe("Trimmed");
       }
     });
 

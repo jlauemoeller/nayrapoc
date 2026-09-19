@@ -27,14 +27,14 @@ export class SignupService {
   ): Promise<Result<User<"with-account">, SignupServiceError>> {
     const result = await transactionResult(
       async (tx): Promise<Result<User<"with-account">, UserServiceError | AccountServiceError>> => {
-        const normalized = {
+        const changes = {
           firstName: tenantInput.firstName,
           lastName: tenantInput.lastName,
           email: tenantInput.email,
           role: "member" as const
         };
 
-        const userResult = await UserService.createTenantUser(normalized, tx);
+        const userResult = await UserService.createTenantUser(changes, tx);
         if (userResult.isErr()) return err(userResult.error);
         const user = userResult.value;
 

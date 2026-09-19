@@ -172,25 +172,6 @@ describe("ProjectService", () => {
       }
     });
 
-    it("trims whitespace from name", async () => {
-      const { user, account } = await createUserWithAccount(db);
-
-      const result = await ProjectService.create(
-        {
-          name: "  Marketing  ",
-          description: blockDoc("desc"),
-          accountId: account.id,
-          creatorId: user.id
-        },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.name).toBe("Marketing");
-      }
-    });
-
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when account does not exist", async () => {
@@ -231,32 +212,12 @@ describe("ProjectService", () => {
       const { user, account } = await createUserWithAccount(db);
       const project = await createProject(db, account.id, user.id, { name: "Old" });
 
-      const result = await ProjectService.update(
-        project.id,
-        { name: "New", description: blockDoc("New desc") },
-        db
-      );
+      const result = await ProjectService.update(project.id, { name: "New", description: blockDoc("New desc") }, db);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.name).toBe("New");
         expect(result.value.description).toEqual(blockDoc("New desc"));
-      }
-    });
-
-    it("trims whitespace from name on update", async () => {
-      const { user, account } = await createUserWithAccount(db);
-      const project = await createProject(db, account.id, user.id);
-
-      const result = await ProjectService.update(
-        project.id,
-        { name: "  Trimmed  ", description: blockDoc("desc") },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.name).toBe("Trimmed");
       }
     });
 

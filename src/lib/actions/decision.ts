@@ -22,6 +22,7 @@ import { DecisionService } from "@/lib/services/decisionService";
 import { ProjectService } from "@/lib/services/projectService";
 import { canCreateDecision, canUpdateDecision, canDeleteDecision } from "@/lib/policies/decision";
 import { currentUser, isAuthorized } from "@/lib/authorization";
+import { blockDocumentSchema } from "../models/blockDocument";
 
 type DecisionCreateInputWithoutActor = Omit<DecisionCreateInput, "creatorId">;
 
@@ -86,7 +87,11 @@ export async function updateDecisionRationale(
     return notAuthorized();
   }
 
-  const result = await DecisionService.updateRationale(decisionId, document);
+  const validated = blockDocumentSchema.safeParse(document);
+
+  if (!validated.success) return invalidInput();
+
+  const result = await DecisionService.updateRationale(decisionId, validated.data);
   return actionResult(result, decisionUpdateSchema.keyof().options);
 }
 

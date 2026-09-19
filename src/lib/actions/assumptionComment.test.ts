@@ -32,7 +32,7 @@ import {
 
 const { db } = setupTestDb();
 
-const sampleBody = [{ type: "paragraph", content: "Looks reasonable" }] as unknown as Block[];
+const sampleBody = [{ id: "1", type: "paragraph", content: "Looks reasonable" }] as unknown as Block[];
 
 const NONEXISTENT_ID = "00000000-0000-7000-8000-000000000000";
 

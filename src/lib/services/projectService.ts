@@ -70,15 +70,15 @@ export class ProjectService {
     input: ProjectCreateInput,
     connection: DbConnection = db
   ): Promise<Result<Project, ProjectServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      name: input.name.trim(),
+      name: input.name,
       description: input.description,
       creator_id: input.creatorId,
       account_id: input.accountId
     };
 
-    const projectData = toProjectCreateRecord(normalized);
+    const projectData = toProjectCreateRecord(changes);
     const record = await ProjectRepository.create(projectData, connection);
     return record.map(toProject).orElse(toProjectServiceErrorResult);
   }
@@ -88,13 +88,13 @@ export class ProjectService {
     input: ProjectUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Project, ProjectServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      name: input.name?.trim(),
-      description: input?.description
+      name: input.name,
+      description: input.description
     };
 
-    const updated = await ProjectRepository.update(projectId, normalized, connection);
+    const updated = await ProjectRepository.update(projectId, changes, connection);
     return updated.map(toProject).orElse(toProjectServiceErrorResult);
   }
 

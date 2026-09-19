@@ -47,13 +47,12 @@ export class AccountService {
     input: AccountCreateInput,
     connection: DbConnection = db
   ): Promise<Result<Account, AccountServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      name: input.name.trim(),
       owner_id: input.ownerId
     };
 
-    const accountData = toAccountCreateRecord(normalized);
+    const accountData = toAccountCreateRecord(changes);
     const record = await AccountRepository.create(accountData, connection);
     return record.map(toAccount).orElse(toAccountServiceErrorResult);
   }
@@ -63,18 +62,11 @@ export class AccountService {
     input: AccountUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Account, AccountServiceError>> {
-    const normalized = {
-      ...input,
-      name: input?.name.trim(),
-      owner_id: input?.ownerId
+    const changes = {
+      ...input
     };
 
-    const updated = await AccountRepository.update(
-      accountId,
-      { name: normalized.name, owner_id: normalized.ownerId },
-      connection
-    );
-
+    const updated = await AccountRepository.update(accountId, changes, connection);
     return updated.map(toAccount).orElse(toAccountServiceErrorResult);
   }
 

@@ -16,11 +16,16 @@ import { AccountRecord } from "@/lib/models/account";
 import { createDecision, updateDecision, updateDecisionRationale, deleteDecision } from "@/lib/actions/decision";
 import { DecisionService } from "@/lib/services/decisionService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createAccount, createDecision as seedDecision, createProject, createUserWithAccount } from "@lib/testing/factories";
+import {
+  createAccount,
+  createDecision as seedDecision,
+  createProject,
+  createUserWithAccount
+} from "@lib/testing/factories";
 
 const { db } = setupTestDb();
 
-const sampleRationale = [{ type: "paragraph", content: "Boring technology wins" }] as unknown as Block[];
+const sampleRationale = [{ id: "1", type: "paragraph", content: "Boring technology wins" }] as unknown as Block[];
 
 const NONEXISTENT_ID = "00000000-0000-7000-8000-000000000000";
 

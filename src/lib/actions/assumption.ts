@@ -22,6 +22,7 @@ import { AssumptionService } from "@/lib/services/assumptionService";
 import { DecisionService } from "@/lib/services/decisionService";
 import { canCreateAssumption, canUpdateAssumption, canDeleteAssumption } from "@/lib/policies/assumption";
 import { currentUser, isAuthorized } from "@/lib/authorization";
+import { blockDocumentSchema } from "../models/blockDocument";
 
 type AssumptionCreateInputWithoutActor = Omit<AssumptionCreateInput, "creatorId">;
 
@@ -85,7 +86,12 @@ export async function updateAssumptionRationale(
     return notAuthorized();
   }
 
-  const result = await AssumptionService.updateRationale(assumptionId, document);
+  const validated = blockDocumentSchema.safeParse(document);
+  if (!validated.success) {
+    return invalidInput();
+  }
+
+  const result = await AssumptionService.updateRationale(assumptionId, validated.data);
   return actionResult(result, assumptionUpdateSchema.keyof().options);
 }
 

@@ -1,15 +1,11 @@
-import type { Block } from "@blocknote/core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 import { decisions, decisionStates } from "@/lib/db/schema";
 import { type Project } from "@/lib/models/project";
 import { type User } from "@/lib/models/user";
 import { z } from "zod";
+import { blockDocumentSchema } from "./blockDocument";
 
 export type DecisionState = (typeof decisionStates)[number];
-
-// The rationale is an opaque BlockNote document — we borrow the library's Block[]
-// type (for blocksToMarkdownLossy etc.) but don't model its internal structure.
-const rationaleDocument = z.custom<Block[]>(Array.isArray, "Invalid rationale document");
 
 // Database types from Drizzle schema
 export type DecisionRecord = InferSelectModel<typeof decisions>;
@@ -27,11 +23,13 @@ type LoadedFields<T extends LoadingContext> =
 
 // Input validation schemas
 
+const titleSchema = z.string().trim().min(1, "Title is required");
+
 // `state` is intentionally absent: a decision always starts life as "proposed"
 // (the DB column default) and is only ever moved between states via an update.
 export const decisionCreateSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  rationale: rationaleDocument.optional(),
+  title: titleSchema,
+  rationale: blockDocumentSchema.optional(),
   projectId: z.uuid(),
   creatorId: z.uuid()
 });
@@ -43,10 +41,10 @@ export const decisionCreateSchema = z.object({
 export const decisionFormSchema = decisionCreateSchema.pick({ title: true });
 
 export const decisionUpdateSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
+  title: titleSchema.optional(),
   state: z.enum(decisionStates).optional(),
   reviewBy: z.date().optional().nullable(),
-  reviewedAt: z.date().optional()
+  reviewedAt: z.date().optional().nullable()
 });
 
 // Domain schemas
@@ -54,7 +52,7 @@ export const decisionUpdateSchema = z.object({
 export const decisionSchema = z.object({
   id: z.uuid(),
   title: z.string(),
-  rationale: rationaleDocument.optional(),
+  rationale: blockDocumentSchema.optional(),
   state: z.enum(decisionStates),
   projectId: z.uuid(),
   creatorId: z.uuid(),

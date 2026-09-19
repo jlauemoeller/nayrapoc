@@ -58,15 +58,14 @@ export class UserService {
     input: TenantUserCreateInput,
     connection: DbConnection = db
   ): Promise<Result<User, UserServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      email: input.email.toLowerCase().trim(),
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
+      firstName: input.firstName,
+      lastName: input.lastName,
       domain: "tenant"
     };
 
-    const userData = toTenantUserCreateRecord(normalized);
+    const userData = toTenantUserCreateRecord(changes);
     const record = await UserRepository.create(userData, connection);
     return record.map(toUser).orElse(toUserServiceErrorResult);
   }
@@ -76,19 +75,18 @@ export class UserService {
     input: TenantUserUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<User, UserServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      email: input.email?.toLowerCase().trim(),
-      firstName: input.firstName?.trim(),
-      lastName: input.lastName?.trim()
+      firstName: input.firstName,
+      lastName: input.lastName
     };
 
     const updatedUserRecord = await UserRepository.update(
       userId,
       {
-        first_name: normalized.firstName,
-        last_name: normalized.lastName,
-        email: normalized.email
+        first_name: changes.firstName,
+        last_name: changes.lastName,
+        email: changes.email
       },
       connection
     );

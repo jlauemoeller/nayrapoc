@@ -63,31 +63,6 @@ describe("UserService", () => {
       }
     });
 
-    it("normalizes email to lowercase and trims whitespace", async () => {
-      const result = await UserService.createTenantUser(
-        { firstName: "Alice", lastName: "Smith", email: "  ALICE@EXAMPLE.COM  ", role: "member" },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.email).toBe("alice@example.com");
-      }
-    });
-
-    it("trims whitespace from first and last name", async () => {
-      const result = await UserService.createTenantUser(
-        { firstName: "  Alice  ", lastName: "  Smith  ", email: "alice@example.com", role: "member" },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.firstName).toBe("Alice");
-        expect(result.value.lastName).toBe("Smith");
-      }
-    });
-
     it("returns Err('already_exists') on duplicate email", async () => {
       await createUser(db, { email: "duplicate@example.com" });
 
@@ -120,23 +95,6 @@ describe("UserService", () => {
       if (result.isOk()) {
         expect(result.value.firstName).toBe("Bob");
         expect(result.value.lastName).toBe("Jones");
-      }
-    });
-
-    it("normalizes email and trims name fields on update", async () => {
-      const record = await createUser(db, { email: "alice@example.com" });
-
-      const result = await UserService.update(
-        record.id,
-        { firstName: "  Alice  ", lastName: "  Smith  ", email: "  ALICE@EXAMPLE.COM  " },
-        db
-      );
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.firstName).toBe("Alice");
-        expect(result.value.lastName).toBe("Smith");
-        expect(result.value.email).toBe("alice@example.com");
       }
     });
 

@@ -17,14 +17,15 @@ type LoadedFields<T extends LoadingContext> =
 
 // Input validation schemas
 
+const nameSchema = z.string().trim().min(1, "Name is required");
+
 export const accountCreateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: nameSchema,
   ownerId: z.uuid()
 });
 
 export const accountUpdateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  ownerId: z.uuid()
+  name: nameSchema
 });
 
 // Domain schemas

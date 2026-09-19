@@ -1,13 +1,9 @@
-import type { Block } from "@blocknote/core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 import { assumptionComments } from "@/lib/db/schema";
 import { type Assumption } from "@/lib/models/assumption";
 import { type User } from "@/lib/models/user";
 import { z } from "zod";
-
-// The body is an opaque BlockNote document — we borrow the library's Block[]
-// type (for blocksToMarkdownLossy etc.) but don't model its internal structure.
-const bodyDocument = z.custom<Block[]>(Array.isArray, "Invalid assumption comment body document");
+import { blockDocumentSchema } from "./blockDocument";
 
 // Database types from Drizzle schema
 export type AssumptionCommentRecord = InferSelectModel<typeof assumptionComments>;
@@ -36,7 +32,7 @@ type LoadedFields<T extends LoadingContext> =
 // Input validation schemas
 
 export const assumptionCommentCreateSchema = z.object({
-  body: bodyDocument.optional(),
+  body: blockDocumentSchema.optional(),
   assumptionId: z.uuid(),
   creatorId: z.uuid(),
   resolverId: z.uuid().optional(),
@@ -53,7 +49,7 @@ export const assumptionCommentFormSchema = assumptionCommentCreateSchema.pick({}
 // `undefined` (or an omitted key) leaves it alone — Drizzle skips undefined values in
 // `.set()`. Unresolving a comment therefore has to send `null`, so these are nullable.
 export const assumptionCommentUpdateSchema = z.object({
-  body: bodyDocument.optional(),
+  body: blockDocumentSchema.optional(),
   resolvedAt: z.date().nullable().optional(),
   resolverId: z.uuid().nullable().optional()
 });
@@ -62,7 +58,7 @@ export const assumptionCommentUpdateSchema = z.object({
 
 export const assumptionCommentSchema = z.object({
   id: z.uuid(),
-  body: bodyDocument.optional(),
+  body: blockDocumentSchema.optional(),
   assumptionId: z.uuid(),
   creatorId: z.uuid(),
   resolverId: z.uuid().optional(),

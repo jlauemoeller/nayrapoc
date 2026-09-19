@@ -1,16 +1,14 @@
-import type { Block } from "@blocknote/core";
 import { AccountRecord, type Account } from "@/lib/models/account";
 import { DecisionState } from "@/lib/models/decision";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
 import { UserRecord, type User } from "@/lib/models/user";
 import { projects } from "@/lib/db/schema";
 import { z } from "zod";
+import { blockDocumentSchema } from "./blockDocument";
 
 // Database types from Drizzle schema
 export type ProjectRecord = InferSelectModel<typeof projects>;
 export type NewProjectRecord = InferInsertModel<typeof projects>;
-
-const descriptionDocument = z.custom<Block[]>(Array.isArray, "Invalid description document");
 
 // Joined query result types
 export type ProjectWithAccountResult = {
@@ -34,9 +32,11 @@ type LoadedFields<T extends LoadingContext> =
 
 // Input validation schemas
 
+const nameSchema = z.string().trim().min(1, "Name is required");
+
 export const projectCreateSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: descriptionDocument.optional(),
+  name: nameSchema,
+  description: blockDocumentSchema.optional(),
   accountId: z.uuid(),
   creatorId: z.uuid()
 });
@@ -48,8 +48,8 @@ export const projectCreateSchema = z.object({
 export const projectFormSchema = projectCreateSchema.pick({ name: true, description: true });
 
 export const projectUpdateSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
-  description: descriptionDocument.optional()
+  name: nameSchema.optional(),
+  description: blockDocumentSchema.optional()
 });
 
 // Domain schemas
@@ -57,7 +57,7 @@ export const projectUpdateSchema = z.object({
 export const projectSchema = z.object({
   id: z.uuid(),
   name: z.string(),
-  description: descriptionDocument.optional(),
+  description: blockDocumentSchema.optional(),
   accountId: z.uuid(),
   creatorId: z.uuid(),
   createdAt: z.date(),

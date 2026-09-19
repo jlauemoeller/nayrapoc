@@ -77,12 +77,12 @@ export class DecisionService {
     input: DecisionCreateInput,
     connection: DbConnection = db
   ): Promise<Result<Decision, DecisionServiceError>> {
-    const normalized = {
+    const changes = {
       ...input,
-      title: input.title.trim()
+      title: input.title
     };
 
-    const decisionData = toDecisionCreateRecord(normalized);
+    const decisionData = toDecisionCreateRecord(changes);
     const record = await DecisionRepository.create(decisionData, connection);
     return record.map(toDecision).orElse(toDecisionServiceErrorResult);
   }
@@ -92,14 +92,14 @@ export class DecisionService {
     input: DecisionUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Decision, DecisionServiceError>> {
-    const normalized = {
-      title: input.title?.trim(),
+    const changes = {
+      title: input.title,
       state: input.state,
       review_by: input.reviewBy,
       reviewed_at: input.reviewedAt
     };
 
-    const updated = await DecisionRepository.update(decisionId, normalized, connection);
+    const updated = await DecisionRepository.update(decisionId, changes, connection);
     return updated.map(toDecision).orElse(toDecisionServiceErrorResult);
   }
 

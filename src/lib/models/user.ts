@@ -27,15 +27,21 @@ type LoadedFields<T extends LoadingContext> =
 
 // Input validation schemas
 
+const firstNameSchema = z.string().trim().min(1, "First name is required");
+const lastNameSchema = z.string().trim().min(1, "Last name is required");
+const emailSchema = z.string().trim().toLowerCase().pipe(z.email("Invalid email format"));
+
 export const userCreateSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.email("Invalid email format")
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  email: emailSchema
 });
+
+const accountNameSchema = z.string().trim().min(1, "Account name is required");
 
 export const tenantUserSignupSchema = z.object({
   ...userCreateSchema.shape,
-  accountName: z.string().min(1, "Account name is required")
+  accountName: accountNameSchema
 });
 
 export const tenantUserCreateSchema = z.object({
@@ -54,9 +60,9 @@ export const tenantUserFormSchema = tenantUserCreateSchema.pick({ firstName: tru
 // Profile edit only — name and email. Role and account membership are changed via the
 // dedicated `UserService.assignAccount`, not here.
 export const tenantUserUpdateSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.email("Invalid email format")
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  email: emailSchema
 });
 
 // Domain user schemas
@@ -102,6 +108,7 @@ export function toUser(record: UserRecord): User<"basic"> {
     domain: record.domain,
     role: record.role,
     accountId: record.account_id ?? undefined,
+    claimedAt: record.claimed_at ?? undefined,
     createdAt: record.created_at,
     updatedAt: record.updated_at
   };
