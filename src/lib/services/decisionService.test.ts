@@ -2,20 +2,17 @@ import { describe, it, expect } from "vitest";
 import type { Block } from "@blocknote/core";
 import { DecisionService } from "@lib/services/decisionService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createDecision, createProject, createUserWithAccount } from "@lib/testing/factories";
+import { createDecision, createProject } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "@lib/testing/scenarios";
 
 const { db } = setupTestDb();
 
 const sampleRationale = [{ type: "paragraph", content: "Boring technology wins" }] as unknown as Block[];
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe("DecisionService", () => {
   describe("get", () => {
     it("returns the domain decision when found", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -33,11 +30,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithProject", () => {
     it("returns the decision joined with its project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -49,11 +44,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithCreator", () => {
     it("returns the decision joined with its creator", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -65,11 +58,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithProjectAndCreator", () => {
     it("returns the decision joined with its project and creator", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -87,11 +78,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("list", () => {
     it("returns all decisions as domain models", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       await createDecision(db, project.id, user.id);
       await createDecision(db, project.id, user.id);
@@ -109,11 +98,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listForProject", () => {
     it("returns only decisions belonging to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const otherProject = await createProject(db, account.id, user.id);
       const mine = await createDecision(db, project.id, user.id);
@@ -127,7 +114,7 @@ describe("DecisionService", () => {
     });
 
     it("returns an empty array when the project has no decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionService.listForProject(project.id, db);
@@ -135,11 +122,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithCreatorForProject", () => {
     it("returns creator-joined decisions scoped to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const otherProject = await createProject(db, account.id, user.id);
       const mine = await createDecision(db, project.id, user.id);
@@ -153,11 +138,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("create", () => {
     it("returns Ok(decision) with camelCase domain fields", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionService.create(
@@ -183,7 +166,7 @@ describe("DecisionService", () => {
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when project does not exist", async () => {
-      const { user } = await createUserWithAccount(db);
+      const { user } = await createUserWithAccountScenario(db);
 
       await expect(
         DecisionService.create(
@@ -198,7 +181,7 @@ describe("DecisionService", () => {
     });
 
     it("throws when creator does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       await expect(
@@ -214,11 +197,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(decision) with updated fields", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id, { title: "Old" });
 
@@ -237,11 +218,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("updateRationale", () => {
     it("persists the document and round-trips it unchanged", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -257,11 +236,9 @@ describe("DecisionService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the decision exists", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -271,7 +248,7 @@ describe("DecisionService", () => {
     });
 
     it("actually removes the decision from the database", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 

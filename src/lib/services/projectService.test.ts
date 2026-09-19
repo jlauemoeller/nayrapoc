@@ -2,20 +2,17 @@ import { describe, it, expect } from "vitest";
 import type { Block } from "@blocknote/core";
 import { ProjectService } from "@lib/services/projectService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createAccount, createProject, createUserWithAccount } from "@lib/testing/factories";
+import { createAccount, createProject } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "@lib/testing/scenarios";
 
 const { db } = setupTestDb();
 
 const blockDoc = (text: string): Block[] => [{ type: "paragraph", content: text }] as unknown as Block[];
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe("ProjectService", () => {
   describe("get", () => {
     it("returns the domain project when found", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await ProjectService.get(project.id, db);
@@ -32,11 +29,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithAccount", () => {
     it("returns the project joined with its account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await ProjectService.getWithAccount(project.id, db);
@@ -47,11 +42,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithCreator", () => {
     it("returns the project joined with its creator", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await ProjectService.getWithCreator(project.id, db);
@@ -62,11 +55,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("list", () => {
     it("returns all projects as domain models", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       await createProject(db, account.id, user.id);
       await createProject(db, account.id, user.id);
 
@@ -83,11 +74,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listForAccount", () => {
     it("returns only projects belonging to the given account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const otherAccount = await createAccount(db, user.id, { name: "Other Account" });
       const mine = await createProject(db, account.id, user.id);
       await createProject(db, otherAccount.id, user.id);
@@ -100,18 +89,16 @@ describe("ProjectService", () => {
     });
 
     it("returns an empty array when the account has no projects", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await ProjectService.listForAccount(account.id, db);
       expect(result).toEqual([]);
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithCreator", () => {
     it("returns projects joined with their creator as domain models", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await ProjectService.listWithCreator(db);
@@ -122,11 +109,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithCreatorForAccount", () => {
     it("returns creator-joined projects scoped to the given account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const otherAccount = await createAccount(db, user.id, { name: "Other Account" });
       const mine = await createProject(db, account.id, user.id);
       await createProject(db, otherAccount.id, user.id);
@@ -139,18 +124,16 @@ describe("ProjectService", () => {
     });
 
     it("returns an empty array when the account has no projects", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await ProjectService.listWithCreatorForAccount(account.id, db);
       expect(result).toEqual([]);
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("create", () => {
     it("returns Ok(project) with camelCase domain fields", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
 
       const result = await ProjectService.create(
         {
@@ -175,7 +158,7 @@ describe("ProjectService", () => {
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when account does not exist", async () => {
-      const { user } = await createUserWithAccount(db);
+      const { user } = await createUserWithAccountScenario(db);
 
       await expect(
         ProjectService.create(
@@ -190,7 +173,7 @@ describe("ProjectService", () => {
     });
 
     it("throws when creator does not exist", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       await expect(
         ProjectService.create(
@@ -205,11 +188,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(project) with updated fields", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id, { name: "Old" });
 
       const result = await ProjectService.update(project.id, { name: "New", description: blockDoc("New desc") }, db);
@@ -228,11 +209,9 @@ describe("ProjectService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the project exists", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await ProjectService.delete(project.id, db);
@@ -241,7 +220,7 @@ describe("ProjectService", () => {
     });
 
     it("actually removes the project from the database", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       await ProjectService.delete(project.id, db);

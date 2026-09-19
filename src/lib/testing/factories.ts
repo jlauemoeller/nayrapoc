@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import { users, accounts, projects, decisions, assumptions, assumptionComments } from "@lib/db/schema";
 import type { DbConnection } from "@lib/db/connection";
 import type { UserRecord, NewUserRecord } from "@lib/models/user";
@@ -52,22 +51,6 @@ export async function createAccount(
     })
     .returning();
   return account;
-}
-
-// ---------------------------------------------------------------------------
-// User + Account factory (handles the circular FK)
-// Creates the user first (account_id = null), then the account, then links them.
-// ---------------------------------------------------------------------------
-
-export async function createUserWithAccount(
-  db: DbConnection,
-  userOverrides: Partial<NewUserRecord> = {},
-  accountOverrides: Partial<NewAccountRecord> = {}
-): Promise<{ user: UserRecord; account: AccountRecord }> {
-  const user = await createUser(db, userOverrides);
-  const account = await createAccount(db, user.id, accountOverrides);
-  const [linkedUser] = await db.update(users).set({ account_id: account.id }).where(eq(users.id, user.id)).returning();
-  return { user: linkedUser, account };
 }
 
 // ---------------------------------------------------------------------------
@@ -142,6 +125,28 @@ export async function createAssumption(
   return assumption;
 }
 
+export function buildAssumptionRecord(overrides: Partial<NewAssumptionRecord> = {}): AssumptionRecord {
+  const n = next();
+
+  const now = new Date();
+
+  return {
+    id: `${n}`,
+    title: `Test Assumption ${n}`,
+    rationale: null,
+    confidence: 0,
+    decision_id: `decision-${n}`,
+    creator_id: `creator-${n}`,
+    created_at: now,
+    updated_at: now,
+    rationale_updated_at: now,
+    rationale_ai_evaluated_at: null,
+    rationale_ai_requested_at: null,
+    rationale_ai_evaluation: null,
+    rationale_ai_rating: null,
+    ...overrides
+  };
+}
 // ---------------------------------------------------------------------------
 // AssumptionComment factory
 // Unresolved by default; pass `{ resolver_id, resolved_at }` in overrides for a resolved one.

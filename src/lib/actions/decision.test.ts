@@ -16,12 +16,8 @@ import { AccountRecord } from "@/lib/models/account";
 import { createDecision, updateDecision, updateDecisionRationale, deleteDecision } from "@/lib/actions/decision";
 import { DecisionService } from "@/lib/services/decisionService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import {
-  createAccount,
-  createDecision as seedDecision,
-  createProject,
-  createUserWithAccount
-} from "@lib/testing/factories";
+import { createAccount, createDecision as seedDecision, createProject } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
 const { db } = setupTestDb();
 
@@ -54,7 +50,7 @@ beforeEach(() => {
 describe("decision actions", () => {
   describe("createDecision", () => {
     it("creates the decision and returns it on success", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       asCurrentUser(actorFor(user, account));
 
@@ -69,7 +65,7 @@ describe("decision actions", () => {
     });
 
     it("denies a member (insufficient role)", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       asCurrentUser(actorFor(user, account, { role: "member" }));
 
@@ -82,7 +78,7 @@ describe("decision actions", () => {
     });
 
     it("denies (not found) when the project does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await createDecision({ title: "Orphan", projectId: NONEXISTENT_ID });
@@ -96,7 +92,7 @@ describe("decision actions", () => {
 
   describe("updateDecision", () => {
     it("updates the title on success", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id, { title: "Old" });
       asCurrentUser(actorFor(user, account));
@@ -108,7 +104,7 @@ describe("decision actions", () => {
     });
 
     it("denies an actor from another account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id);
       const otherAccount = await createAccount(db, user.id);
@@ -123,7 +119,7 @@ describe("decision actions", () => {
     });
 
     it("denies (not found) when the decision does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await updateDecision(NONEXISTENT_ID, { title: "Ghost" });
@@ -137,7 +133,7 @@ describe("decision actions", () => {
 
   describe("updateDecisionRationale", () => {
     it("persists the rationale document on success", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id);
       asCurrentUser(actorFor(user, account));
@@ -149,7 +145,7 @@ describe("decision actions", () => {
     });
 
     it("denies an actor from another account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id);
       const otherAccount = await createAccount(db, user.id);
@@ -166,7 +162,7 @@ describe("decision actions", () => {
 
   describe("deleteDecision", () => {
     it("deletes the decision and returns success", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id);
       asCurrentUser(actorFor(user, account));
@@ -178,7 +174,7 @@ describe("decision actions", () => {
     });
 
     it("denies an actor from another account and leaves the row intact", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await seedDecision(db, project.id, user.id);
       const otherAccount = await createAccount(db, user.id);
@@ -194,7 +190,7 @@ describe("decision actions", () => {
     });
 
     it("denies (not found) when the decision does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await deleteDecision(NONEXISTENT_ID);

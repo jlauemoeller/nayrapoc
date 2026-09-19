@@ -3,12 +3,8 @@ import { eq } from "drizzle-orm";
 import type { Block } from "@blocknote/core";
 import { projects, decisions, assumptions } from "@lib/db/schema";
 import { setupTestDb } from "@lib/testing/dbTest";
-import {
-  createUserWithAccount,
-  createProject,
-  createDecision,
-  createAssumption
-} from "@lib/testing/factories";
+import { createProject, createDecision, createAssumption } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 import { TemplateService, TEMPLATE_ACCOUNT_ID } from "@lib/templates/templateService";
 
 const { db } = setupTestDb();
@@ -16,7 +12,7 @@ const { db } = setupTestDb();
 describe("TemplateService.cloneInto", () => {
   it("deep-copies the template tree into a new account, re-keyed and re-attributed", async () => {
     // Template account (fixed id) with one project -> decision -> assumption.
-    const { user: templateUser } = await createUserWithAccount(db, {}, { id: TEMPLATE_ACCOUNT_ID });
+    const { user: templateUser } = await createUserWithAccountScenario(db, {}, { id: TEMPLATE_ACCOUNT_ID });
     const description = [{ type: "paragraph", content: "hello" }] as unknown as Block[];
     const tProject = await createProject(db, TEMPLATE_ACCOUNT_ID, templateUser.id, {
       name: "Template Project",
@@ -34,7 +30,7 @@ describe("TemplateService.cloneInto", () => {
     });
 
     // Fresh target account with a single user.
-    const { user: newUser, account: newAccount } = await createUserWithAccount(db);
+    const { user: newUser, account: newAccount } = await createUserWithAccountScenario(db);
 
     await TemplateService.cloneInto({ accountId: newAccount.id, userId: newUser.id }, db);
 
@@ -71,7 +67,7 @@ describe("TemplateService.cloneInto", () => {
   });
 
   it("clones every project/decision/assumption in the tree", async () => {
-    const { user: templateUser } = await createUserWithAccount(db, {}, { id: TEMPLATE_ACCOUNT_ID });
+    const { user: templateUser } = await createUserWithAccountScenario(db, {}, { id: TEMPLATE_ACCOUNT_ID });
     const p1 = await createProject(db, TEMPLATE_ACCOUNT_ID, templateUser.id);
     const p2 = await createProject(db, TEMPLATE_ACCOUNT_ID, templateUser.id);
     const d1 = await createDecision(db, p1.id, templateUser.id);
@@ -80,7 +76,7 @@ describe("TemplateService.cloneInto", () => {
     await createAssumption(db, d1.id, templateUser.id);
     void p2;
 
-    const { user: newUser, account: newAccount } = await createUserWithAccount(db);
+    const { user: newUser, account: newAccount } = await createUserWithAccountScenario(db);
     await TemplateService.cloneInto({ accountId: newAccount.id, userId: newUser.id }, db);
 
     const clonedProjects = await db.select().from(projects).where(eq(projects.account_id, newAccount.id));
@@ -98,7 +94,7 @@ describe("TemplateService.cloneInto", () => {
   });
 
   it("is a no-op when no template account is seeded", async () => {
-    const { user: newUser, account: newAccount } = await createUserWithAccount(db);
+    const { user: newUser, account: newAccount } = await createUserWithAccountScenario(db);
 
     await TemplateService.cloneInto({ accountId: newAccount.id, userId: newUser.id }, db);
 

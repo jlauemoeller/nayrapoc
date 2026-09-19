@@ -3,7 +3,8 @@ import { eq } from "drizzle-orm";
 import { users, accounts, projects, decisions } from "@lib/db/schema";
 import { SignupService } from "@lib/services/signupService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createUser, createUserWithAccount, createProject, createDecision } from "@lib/testing/factories";
+import { createUser, createProject, createDecision } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 import { TEMPLATE_ACCOUNT_ID } from "@lib/templates/templateService";
 
 const { db } = setupTestDb();
@@ -48,7 +49,7 @@ describe("SignupService.claimAccount", () => {
   });
 
   it("clones the template account's content into the new account", async () => {
-    const { user: templateUser } = await createUserWithAccount(db, {}, { id: TEMPLATE_ACCOUNT_ID });
+    const { user: templateUser } = await createUserWithAccountScenario(db, {}, { id: TEMPLATE_ACCOUNT_ID });
     const tProject = await createProject(db, TEMPLATE_ACCOUNT_ID, templateUser.id, { name: "Starter" });
     await createDecision(db, tProject.id, templateUser.id, { title: "Starter Decision" });
 
@@ -97,7 +98,7 @@ describe("SignupService.claimAccount", () => {
 
 describe("SignupService.markClaimed", () => {
   it("sets claimed_at on user and account when previously null", async () => {
-    const { user, account } = await createUserWithAccount(db);
+    const { user, account } = await createUserWithAccountScenario(db);
     expect(user.claimed_at).toBeNull();
     expect(account.claimed_at).toBeNull();
 
@@ -113,7 +114,7 @@ describe("SignupService.markClaimed", () => {
   });
 
   it("is idempotent — second call leaves the original claimed_at in place", async () => {
-    const { user } = await createUserWithAccount(db);
+    const { user } = await createUserWithAccountScenario(db);
 
     const first = await SignupService.markClaimed(user.id, db);
     expect(first.isOk()).toBe(true);

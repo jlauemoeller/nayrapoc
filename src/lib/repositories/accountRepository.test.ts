@@ -1,18 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { AccountRepository } from "@lib/repositories/accountRepository";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createUser, createAccount, createUserWithAccount } from "@lib/testing/factories";
+import { createUser, createAccount } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
 const { db } = setupTestDb();
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("AccountRepository", () => {
   describe("list", () => {
     it("returns all accounts", async () => {
-      const { user } = await createUserWithAccount(db);
+      const { user } = await createUserWithAccountScenario(db);
       await createAccount(db, user.id, { name: "Second Account" });
 
       const result = await AccountRepository.list(db);
@@ -26,11 +23,9 @@ describe("AccountRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithOwner", () => {
     it("returns accounts joined with their owner", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
 
       const result = await AccountRepository.listWithOwner(db);
 
@@ -45,11 +40,9 @@ describe("AccountRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithOwner", () => {
     it("returns the account joined with its owner", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
 
       const result = await AccountRepository.getWithOwner(account.id, db);
 
@@ -64,11 +57,9 @@ describe("AccountRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("get", () => {
     it("returns the account when found", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await AccountRepository.get(account.id, db);
 
@@ -81,8 +72,6 @@ describe("AccountRepository", () => {
       expect(result).toBeUndefined();
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("create", () => {
     it("returns Ok(account) on success", async () => {
@@ -101,19 +90,14 @@ describe("AccountRepository", () => {
     // than returning a typed Err.
     it("throws when owner_id does not exist", async () => {
       await expect(
-        AccountRepository.create(
-          { name: "Ghost Account", owner_id: "00000000-0000-7000-8000-000000000000" },
-          db
-        )
+        AccountRepository.create({ name: "Ghost Account", owner_id: "00000000-0000-7000-8000-000000000000" }, db)
       ).rejects.toThrow();
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(account) with the updated fields", async () => {
-      const { account } = await createUserWithAccount(db, {}, { name: "Old Name" });
+      const { account } = await createUserWithAccountScenario(db, {}, { name: "Old Name" });
 
       const result = await AccountRepository.update(account.id, { name: "New Name" }, db);
 
@@ -128,11 +112,9 @@ describe("AccountRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the account exists", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await AccountRepository.delete(account.id, db);
 
@@ -146,7 +128,7 @@ describe("AccountRepository", () => {
     });
 
     it("actually removes the account from the database", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       await AccountRepository.delete(account.id, db);
 

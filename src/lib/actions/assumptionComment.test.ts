@@ -26,9 +26,9 @@ import {
   createAssumptionComment as seedComment,
   createDecision,
   createProject,
-  createUser,
-  createUserWithAccount
+  createUser
 } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
 const { db } = setupTestDb();
 
@@ -58,7 +58,7 @@ function asCurrentUser(actor: SessionUser) {
 
 // Every action test starts from an account with a project → decision → assumption.
 async function seedAssumption() {
-  const { user, account } = await createUserWithAccount(db);
+  const { user, account } = await createUserWithAccountScenario(db);
   const project = await createProject(db, account.id, user.id);
   const decision = await createDecision(db, project.id, user.id);
   const assumption = await createAssumption(db, decision.id, user.id);
@@ -107,7 +107,7 @@ describe("assumption comment actions", () => {
     });
 
     it("denies (not found) when the assumption does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await createAssumptionComment({ assumptionId: NONEXISTENT_ID, body: sampleBody });
@@ -151,7 +151,7 @@ describe("assumption comment actions", () => {
     });
 
     it("denies (not found) when the comment does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await updateAssumptionComment(NONEXISTENT_ID, { body: sampleBody });
@@ -197,7 +197,7 @@ describe("assumption comment actions", () => {
     });
 
     it("denies (not found) when the comment does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       asCurrentUser(actorFor(user, account));
 
       const result = await deleteAssumptionComment(NONEXISTENT_ID);

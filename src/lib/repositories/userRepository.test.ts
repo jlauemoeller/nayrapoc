@@ -1,12 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { UserRepository } from "@lib/repositories/userRepository";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createUser, createUserWithAccount } from "@lib/testing/factories";
+import { createUser } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
 const { db } = setupTestDb();
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("UserRepository", () => {
   describe("list", () => {
@@ -25,11 +23,9 @@ describe("UserRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithAccount", () => {
     it("returns only users that have an account, joined with their account", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       await createUser(db); // no account — should not appear
 
       const result = await UserRepository.listWithAccount(db);
@@ -48,8 +44,6 @@ describe("UserRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("get", () => {
     it("returns the user when found", async () => {
       const user = await createUser(db);
@@ -66,8 +60,6 @@ describe("UserRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getByEmail", () => {
     it("returns the user when found", async () => {
       const user = await createUser(db, { email: "find-me@example.com" });
@@ -83,8 +75,6 @@ describe("UserRepository", () => {
       expect(result).toBeUndefined();
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("create", () => {
     it("returns Ok(user) on success", async () => {
@@ -133,8 +123,6 @@ describe("UserRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(user) with the updated fields", async () => {
       const user = await createUser(db, { first_name: "Alice" });
@@ -161,8 +149,6 @@ describe("UserRepository", () => {
       ).rejects.toThrow("update failed");
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("delete", () => {
     it("returns true when the user exists", async () => {

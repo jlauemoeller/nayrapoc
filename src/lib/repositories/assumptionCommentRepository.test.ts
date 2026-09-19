@@ -3,20 +3,16 @@ import type { Block } from "@blocknote/core";
 import { AssumptionCommentRepository } from "@lib/repositories/assumptionCommentRepository";
 import { setupTestDb } from "@lib/testing/dbTest";
 import { createAssumption, createAssumptionComment } from "@lib/testing/factories";
-import { buildDecisionWithAssumptionAndCommentsScenario } from "@lib/testing/scenarios";
+import { createDecisionWithAssumptionAndCommentsScenario } from "@lib/testing/scenarios";
 
 const { db } = setupTestDb();
 
 const sampleBody = [{ type: "paragraph", content: "Looks reasonable" }] as unknown as Block[];
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe("AssumptionCommentRepository", () => {
   describe("get", () => {
     it("returns the comment when found", async () => {
-      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.get(unresolvedComment.id, db);
 
@@ -30,11 +26,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithAssumption", () => {
     it("returns the comment joined with its assumption", async () => {
-      const { assumption, unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { assumption, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.getWithAssumption(unresolvedComment.id, db);
 
@@ -49,11 +43,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithAssumptionAndCreator", () => {
     it("returns the comment joined with its assumption and creator", async () => {
-      const { user, assumption, unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, assumption, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.getWithAssumptionAndCreator(unresolvedComment.id, db);
 
@@ -64,11 +56,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithAssumptionCreatorAndResolver", () => {
     it("returns a null resolver when the comment is unresolved", async () => {
-      const { user, assumption, unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, assumption, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.getWithAssumptionCreatorAndResolver(unresolvedComment.id, db);
 
@@ -82,7 +72,7 @@ describe("AssumptionCommentRepository", () => {
     // The creator and resolver are both `users` rows, so this checks that the two
     // aliased joins pick out distinct users rather than the same one twice.
     it("returns the resolver when the comment is resolved by a different user", async () => {
-      const { user, resolver, resolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, resolver, resolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.getWithAssumptionCreatorAndResolver(resolvedComment.id, db);
 
@@ -100,12 +90,10 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listForAssumptionWithCreatorAndResolver", () => {
     it("returns comments with creator and resolver, scoped to the given assumption", async () => {
       const { user, decision, assumption, unresolvedComment, resolvedComment } =
-        await buildDecisionWithAssumptionAndCommentsScenario(db);
+        await createDecisionWithAssumptionAndCommentsScenario(db);
       const otherAssumption = await createAssumption(db, decision.id, user.id);
       await createAssumptionComment(db, otherAssumption.id, user.id);
 
@@ -119,7 +107,7 @@ describe("AssumptionCommentRepository", () => {
 
     it("returns comments oldest first", async () => {
       const { assumption, unresolvedComment, resolvedComment } =
-        await buildDecisionWithAssumptionAndCommentsScenario(db);
+        await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.listForAssumptionWithCreatorAndResolver(assumption.id, db);
 
@@ -127,7 +115,7 @@ describe("AssumptionCommentRepository", () => {
     });
 
     it("returns a null resolver for unresolved comments and the user for resolved ones", async () => {
-      const { assumption, resolver } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { assumption, resolver } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.listForAssumptionWithCreatorAndResolver(assumption.id, db);
 
@@ -135,7 +123,7 @@ describe("AssumptionCommentRepository", () => {
     });
 
     it("returns an empty array when the assumption has no comments", async () => {
-      const { user, decision } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, decision } = await createDecisionWithAssumptionAndCommentsScenario(db);
       const emptyAssumption = await createAssumption(db, decision.id, user.id);
 
       const result = await AssumptionCommentRepository.listForAssumptionWithCreatorAndResolver(emptyAssumption.id, db);
@@ -143,11 +131,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("create", () => {
     it("returns Ok(comment) on success", async () => {
-      const { user, assumption } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, assumption } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.create(
         {
@@ -172,7 +158,7 @@ describe("AssumptionCommentRepository", () => {
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when assumption_id does not exist", async () => {
-      const { user } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       await expect(
         AssumptionCommentRepository.create(
@@ -186,7 +172,7 @@ describe("AssumptionCommentRepository", () => {
     });
 
     it("throws when creator_id does not exist", async () => {
-      const { assumption } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { assumption } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       await expect(
         AssumptionCommentRepository.create(
@@ -200,7 +186,7 @@ describe("AssumptionCommentRepository", () => {
     });
 
     it("throws when resolver_id does not exist", async () => {
-      const { user, assumption } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { user, assumption } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       await expect(
         AssumptionCommentRepository.create(
@@ -216,11 +202,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(comment) with the updated fields", async () => {
-      const { resolver, unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { resolver, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
       const resolvedAt = new Date("2026-03-01T10:00:00Z");
 
       const result = await AssumptionCommentRepository.update(
@@ -243,11 +227,9 @@ describe("AssumptionCommentRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the comment exists", async () => {
-      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.delete(unresolvedComment.id, db);
 
@@ -260,7 +242,7 @@ describe("AssumptionCommentRepository", () => {
     });
 
     it("actually removes the comment from the database", async () => {
-      const { unresolvedComment } = await buildDecisionWithAssumptionAndCommentsScenario(db);
+      const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       await AssumptionCommentRepository.delete(unresolvedComment.id, db);
 

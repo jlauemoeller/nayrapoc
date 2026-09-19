@@ -2,19 +2,17 @@ import { describe, it, expect } from "vitest";
 import type { Block } from "@blocknote/core";
 import { DecisionRepository } from "@lib/repositories/decisionRepository";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createDecision, createProject, createUserWithAccount } from "@lib/testing/factories";
+import { createDecision, createProject } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
 const { db } = setupTestDb();
 
 const sampleRationale = [{ type: "paragraph", content: "Boring technology wins" }] as unknown as Block[];
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("DecisionRepository", () => {
   describe("list", () => {
     it("returns all decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       await createDecision(db, project.id, user.id);
       await createDecision(db, project.id, user.id);
@@ -30,11 +28,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listForProject", () => {
     it("returns only decisions belonging to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const otherProject = await createProject(db, account.id, user.id);
       const mine = await createDecision(db, project.id, user.id);
@@ -47,7 +43,7 @@ describe("DecisionRepository", () => {
     });
 
     it("returns decisions oldest first", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const older = await createDecision(db, project.id, user.id, { created_at: new Date("2026-01-01") });
       const newer = await createDecision(db, project.id, user.id, { created_at: new Date("2026-02-01") });
@@ -58,7 +54,7 @@ describe("DecisionRepository", () => {
     });
 
     it("returns an empty array when the project has no decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionRepository.listForProject(project.id, db);
@@ -66,11 +62,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithCreatorForProject", () => {
     it("returns decisions with their creator, scoped to the given project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const otherProject = await createProject(db, account.id, user.id);
       const mine = await createDecision(db, project.id, user.id);
@@ -84,7 +78,7 @@ describe("DecisionRepository", () => {
     });
 
     it("returns an empty array when the project has no decisions", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionRepository.listWithCreatorForProject(project.id, db);
@@ -92,11 +86,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("get", () => {
     it("returns the decision when found", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -112,11 +104,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithProject", () => {
     it("returns the decision joined with its project", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -133,11 +123,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithCreator", () => {
     it("returns the decision joined with its creator", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -149,11 +137,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithProjectAndCreator", () => {
     it("returns the decision joined with its project and creator", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -171,11 +157,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("create", () => {
     it("returns Ok(decision) on success", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionRepository.create(
@@ -200,7 +184,7 @@ describe("DecisionRepository", () => {
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when project_id does not exist", async () => {
-      const { user } = await createUserWithAccount(db);
+      const { user } = await createUserWithAccountScenario(db);
 
       await expect(
         DecisionRepository.create(
@@ -215,7 +199,7 @@ describe("DecisionRepository", () => {
     });
 
     it("throws when creator_id does not exist", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
 
       await expect(
@@ -231,11 +215,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(decision) with the updated fields", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id, { title: "Old Title" });
 
@@ -252,11 +234,9 @@ describe("DecisionRepository", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the decision exists", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 
@@ -271,7 +251,7 @@ describe("DecisionRepository", () => {
     });
 
     it("actually removes the decision from the database", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
       const decision = await createDecision(db, project.id, user.id);
 

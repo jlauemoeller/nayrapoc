@@ -1,17 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { AccountService } from "@lib/services/accountService";
 import { setupTestDb } from "@lib/testing/dbTest";
-import { createAccount, createUser, createUserWithAccount } from "@lib/testing/factories";
-const { db } = setupTestDb();
+import { createAccount, createUser } from "@lib/testing/factories";
+import { createUserWithAccountScenario } from "../testing/scenarios";
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+const { db } = setupTestDb();
 
 describe("AccountService", () => {
   describe("get", () => {
     it("returns the domain account when found", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await AccountService.get(account.id, db);
 
@@ -26,11 +24,9 @@ describe("AccountService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getWithOwner", () => {
     it("returns the account joined with its owner", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
 
       const result = await AccountService.getWithOwner(account.id, db);
 
@@ -45,11 +41,9 @@ describe("AccountService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("list", () => {
     it("returns all accounts as domain models", async () => {
-      const { user } = await createUserWithAccount(db);
+      const { user } = await createUserWithAccountScenario(db);
       await createAccount(db, user.id, { name: "Second Account" });
 
       const result = await AccountService.list(db);
@@ -65,11 +59,9 @@ describe("AccountService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("listWithOwner", () => {
     it("returns accounts joined with their owner as domain models", async () => {
-      const { user, account } = await createUserWithAccount(db);
+      const { user, account } = await createUserWithAccountScenario(db);
 
       const result = await AccountService.listWithOwner(db);
 
@@ -83,8 +75,6 @@ describe("AccountService", () => {
       expect(result).toEqual([]);
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("create", () => {
     it("returns Ok(account) with camelCase domain fields", async () => {
@@ -109,11 +99,9 @@ describe("AccountService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(account) with updated name", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await AccountService.update(account.id, { name: "Updated Name" }, db);
 
@@ -130,11 +118,9 @@ describe("AccountService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("delete", () => {
     it("returns true when the account exists", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       const result = await AccountService.delete(account.id, db);
 
@@ -142,7 +128,7 @@ describe("AccountService", () => {
     });
 
     it("actually removes the account from the database", async () => {
-      const { account } = await createUserWithAccount(db);
+      const { account } = await createUserWithAccountScenario(db);
 
       await AccountService.delete(account.id, db);
 

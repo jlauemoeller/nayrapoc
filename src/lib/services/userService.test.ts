@@ -5,10 +5,6 @@ import { createUser, createAccount } from "@lib/testing/factories";
 
 const { db } = setupTestDb();
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe("UserService", () => {
   describe("get", () => {
     it("returns the domain user when found", async () => {
@@ -27,8 +23,6 @@ describe("UserService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("getByEmail", () => {
     it("returns the domain user when found", async () => {
       const record = await createUser(db, { email: "find-me@example.com" });
@@ -44,8 +38,6 @@ describe("UserService", () => {
       expect(result).toBeUndefined();
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("createTenantUser", () => {
     it("returns Ok(user) with camelCase domain fields", async () => {
@@ -79,8 +71,6 @@ describe("UserService", () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-
   describe("update", () => {
     it("returns Ok(user) with updated fields", async () => {
       const record = await createUser(db, { first_name: "Alice", email: "alice@example.com" });
@@ -108,8 +98,6 @@ describe("UserService", () => {
       ).rejects.toThrow("update failed");
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("assignAccount", () => {
     it("sets the account and role on the user", async () => {
@@ -146,8 +134,6 @@ describe("UserService", () => {
       ).rejects.toThrow();
     });
   });
-
-  // -------------------------------------------------------------------------
 
   describe("delete", () => {
     it("returns true when the user exists", async () => {
