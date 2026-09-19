@@ -1,15 +1,10 @@
-import type { Block } from "@blocknote/core";
 import { InferSelectModel, InferInsertModel } from "drizzle-orm";
-import { assumptions } from "@/lib/db/schema";
+import { assumptions, rationaleAiRatings } from "@/lib/db/schema";
 import { type Decision } from "@/lib/models/decision";
 import { type User } from "@/lib/models/user";
 import { z } from "zod";
+import { blockDocumentSchema } from "./blockDocument";
 
-// The rationale is an opaque BlockNote document — we borrow the library's Block[]
-// type (for blocksToMarkdownLossy etc.) but don't model its internal structure.
-const rationaleDocument = z.custom<Block[]>(Array.isArray, "Invalid rationale document");
-
-// Database types from Drizzle schema
 export type AssumptionRecord = InferSelectModel<typeof assumptions>;
 export type NewAssumptionRecord = InferInsertModel<typeof assumptions>;
 
@@ -32,12 +27,15 @@ type LoadedFields<T extends LoadingContext> =
 
 // Input validation schemas
 
+const titleSchema = z.string().trim().min(1, "Title is required");
+const confidenceSchema = z.number().min(0).max(5);
+
 export const assumptionCreateSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  rationale: rationaleDocument.optional(),
+  title: titleSchema,
+  rationale: blockDocumentSchema.optional(),
+  confidence: confidenceSchema.optional(),
   decisionId: z.uuid(),
-  creatorId: z.uuid(),
-  confidence: z.number().min(0).max(5).optional()
+  creatorId: z.uuid()
 });
 
 // The fields the create form actually collects. `decisionId` is contextual (route/props)
@@ -47,8 +45,8 @@ export const assumptionCreateSchema = z.object({
 export const assumptionFormSchema = assumptionCreateSchema.pick({ title: true, confidence: true });
 
 export const assumptionUpdateSchema = z.object({
-  title: z.string().optional(),
-  confidence: z.number().min(0).max(5).optional()
+  title: titleSchema.optional(),
+  confidence: confidenceSchema.optional()
 });
 
 // Domain schemas
@@ -56,10 +54,15 @@ export const assumptionUpdateSchema = z.object({
 export const assumptionSchema = z.object({
   id: z.uuid(),
   title: z.string(),
-  rationale: rationaleDocument.optional(),
+  rationale: blockDocumentSchema.optional(),
+  rationaleUpdatedAt: z.date(),
+  rationaleAiEvaluatedAt: z.date().optional(),
+  rationaleAiRequestedAt: z.date().optional(),
+  rationaleAiEvaluation: z.string().optional(),
+  rationaleAiRating: z.enum(rationaleAiRatings).optional(),
   decisionId: z.uuid(),
   creatorId: z.uuid(),
-  confidence: z.number().int().optional(),
+  confidence: z.number().optional(),
   createdAt: z.date(),
   updatedAt: z.date()
 });
@@ -81,6 +84,11 @@ export function toAssumption(record: AssumptionRecord): Assumption<"basic"> {
     id: record.id,
     title: record.title,
     rationale: record.rationale ?? undefined,
+    rationaleUpdatedAt: record.rationale_updated_at,
+    rationaleAiRequestedAt: record.rationale_ai_requested_at ?? undefined,
+    rationaleAiEvaluatedAt: record.rationale_ai_evaluated_at ?? undefined,
+    rationaleAiEvaluation: record.rationale_ai_evaluation ?? undefined,
+    rationaleAiRating: record.rationale_ai_rating ?? undefined,
     decisionId: record.decision_id,
     creatorId: record.creator_id,
     confidence: record.confidence ?? undefined,
@@ -99,4 +107,14 @@ export function toAssumptionCreateRecord(
     creator_id: input.creatorId,
     confidence: input.confidence
   };
+}
+
+export const evaluationStatuses = ["missing", "pending", "outdated", "current"] as const;
+export type EvaluationStatus = (typeof evaluationStatuses)[number];
+export function evaluationStatus(a: Assumption): EvaluationStatus {
+  if (a.rationaleAiEvaluatedAt === undefined) return "missing";
+  if (a.rationaleAiEvaluatedAt < a.rationaleUpdatedAt) return "outdated";
+  if (a.rationaleAiRequestedAt && a.rationaleAiRequestedAt > a.rationaleAiEvaluatedAt) return "pending";
+
+  return "current";
 }

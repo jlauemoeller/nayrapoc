@@ -141,15 +141,16 @@ export class AssumptionRepository {
     assumptionData: Partial<NewAssumptionRecord>,
     connection: DbConnection = db
   ): Promise<Result<AssumptionRecord, AssumptionRecordError>> {
+    const now = new Date();
+
+    const changes = {
+      ...assumptionData,
+      ...(assumptionData.rationale !== undefined && { rationale_updated_at: now }),
+      updated_at: now
+    };
+
     return guarded(async () => {
-      const [assumption] = await connection
-        .update(assumptions)
-        .set({
-          ...assumptionData,
-          updated_at: new Date()
-        })
-        .where(eq(assumptions.id, id))
-        .returning();
+      const [assumption] = await connection.update(assumptions).set(changes).where(eq(assumptions.id, id)).returning();
 
       if (!assumption) {
         throw new Error(`update failed: Stale or invalid Assumption record id: ${id}`);

@@ -84,12 +84,19 @@ export const decisions = pgTable("decisions", {
   updated_at: timestamp("updated_at").defaultNow().notNull()
 });
 
+export const rationaleAiRatings = ["addressed", "partially_addressed", "not_addressed"] as const;
+
 export const assumptions = pgTable("assumptions", {
   id: uuid("id")
     .primaryKey()
     .$defaultFn(() => generateId()),
   title: text("title").notNull(),
   rationale: jsonb("rationale").$type<Block[]>(),
+  rationale_updated_at: timestamp("rationale_updated_at").defaultNow().notNull(),
+  rationale_ai_evaluated_at: timestamp("rationale_ai_evaluated_at"),
+  rationale_ai_requested_at: timestamp("rationale_ai_requested_at"),
+  rationale_ai_evaluation: text("rationale_ai_evaluation"),
+  rationale_ai_rating: text("rationale_ai_rating", { enum: rationaleAiRatings }),
   decision_id: uuid("decision_id")
     .references(() => decisions.id, { onDelete: "cascade" })
     .notNull(),

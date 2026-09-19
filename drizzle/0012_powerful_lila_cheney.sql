@@ -1,0 +1,1 @@
+ALTER TABLE "assumptions" ADD COLUMN "rationale_updated_at" timestamp DEFAULT now() NOT NULL;

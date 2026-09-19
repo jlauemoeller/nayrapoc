@@ -86,12 +86,7 @@ export class AssumptionService {
     input: AssumptionCreateInput,
     connection: DbConnection = db
   ): Promise<Result<Assumption, AssumptionServiceError>> {
-    const normalized = {
-      ...input,
-      title: input.title.trim()
-    };
-
-    const assumptionData = toAssumptionCreateRecord(normalized);
+    const assumptionData = toAssumptionCreateRecord(input);
     const record = await AssumptionRepository.create(assumptionData, connection);
     return record.map(toAssumption).orElse(toAssumptionServiceErrorResult);
   }
@@ -101,12 +96,12 @@ export class AssumptionService {
     input: AssumptionUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Assumption, AssumptionServiceError>> {
-    const normalized = {
-      title: input.title?.trim(),
+    const changes = {
+      title: input.title,
       confidence: input.confidence
     };
 
-    const updated = await AssumptionRepository.update(assumptionId, normalized, connection);
+    const updated = await AssumptionRepository.update(assumptionId, changes, connection);
     return updated.map(toAssumption).orElse(toAssumptionServiceErrorResult);
   }
 
