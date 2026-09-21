@@ -1,23 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
-
-// Mock only `currentUser` — there is no HTTP session in the test runner, so the
-// real `getServerSession` can't run. `isAuthorized` (and the policies it calls)
-// is kept real via `importActual` so the action's authorization gating is
-// genuinely exercised against real account data.
-vi.mock("@/lib/authorization", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/authorization")>("@/lib/authorization");
-  return { ...actual, currentUser: vi.fn() };
-});
-
-import { currentUser } from "@/lib/authorization";
-import { SessionUser, UserRecord } from "@/lib/models/user";
-import { AccountRecord } from "@/lib/models/account";
 import { createDecision, updateDecision, updateDecisionRationale, deleteDecision } from "@/lib/actions/decision";
 import { DecisionService } from "@/lib/services/decisionService";
 import { setupTestDb } from "@lib/testing/dbTest";
 import { createAccount, createDecision as seedDecision, createProject } from "@lib/testing/factories";
 import { createUserWithAccountScenario } from "../testing/scenarios";
+
+vi.mock("@/lib/authorization", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/authorization")>("@/lib/authorization");
+  return { ...actual, currentUser: vi.fn() };
+});
 
 const { db } = setupTestDb();
 
@@ -25,26 +18,8 @@ const sampleRationale = [{ id: "1", type: "paragraph", content: "Boring technolo
 
 const NONEXISTENT_ID = "00000000-0000-7000-8000-000000000000";
 
-// Build the SessionUser the mocked `currentUser` will return. Defaults to an
-// owner in the resource's account (the authorized case); override `accountId`
-// or `role` to construct denial scenarios.
-function actorFor(user: UserRecord, account: AccountRecord, overrides: Partial<SessionUser> = {}): SessionUser {
-  return {
-    id: user.id,
-    email: user.email,
-    domain: "tenant",
-    role: "owner",
-    accountId: account.id,
-    ...overrides
-  };
-}
-
-function asCurrentUser(actor: SessionUser) {
-  vi.mocked(currentUser).mockResolvedValue(actor);
-}
-
 beforeEach(() => {
-  vi.mocked(currentUser).mockReset();
+  resetCurrentUser();
 });
 
 describe("decision actions", () => {

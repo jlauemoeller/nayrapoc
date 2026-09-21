@@ -27,7 +27,7 @@ export async function createProject(
   input: ProjectCreateInputWithoutActor
 ): Promise<ActionResult<Project, FieldError<keyof ProjectFormInput | "root">>> {
   const actor = await currentUser();
-  if (!isAuthorized(canCreateProject, actor, actor.accountId)) {
+  if (!isAuthorized(canCreateProject, actor, input.accountId)) {
     return notAuthorized();
   }
 

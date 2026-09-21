@@ -1,18 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
-
-// Mock only `currentUser` — there is no HTTP session in the test runner, so the
-// real `getServerSession` can't run. `isAuthorized` (and the policies it calls)
-// is kept real via `importActual` so the action's authorization gating is
-// genuinely exercised against real account data.
-vi.mock("@/lib/authorization", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/authorization")>("@/lib/authorization");
-  return { ...actual, currentUser: vi.fn() };
-});
-
-import { currentUser } from "@/lib/authorization";
-import { SessionUser, UserRecord } from "@/lib/models/user";
-import { AccountRecord } from "@/lib/models/account";
 import {
   createAssumptionComment,
   updateAssumptionComment,
@@ -30,6 +18,11 @@ import {
 } from "@lib/testing/factories";
 import { createUserWithAccountScenario } from "../testing/scenarios";
 
+vi.mock("@/lib/authorization", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/authorization")>("@/lib/authorization");
+  return { ...actual, currentUser: vi.fn() };
+});
+
 const { db } = setupTestDb();
 
 const sampleBody = [{ id: "1", type: "paragraph", content: "Looks reasonable" }] as unknown as Block[];
@@ -37,24 +30,6 @@ const sampleBody = [{ id: "1", type: "paragraph", content: "Looks reasonable" }]
 const NONEXISTENT_ID = "00000000-0000-7000-8000-000000000000";
 
 const NOT_AUTHORIZED = { success: false, error: { field: "root", message: "Not authorized" } };
-
-// Build the SessionUser the mocked `currentUser` will return. Defaults to an
-// owner in the resource's account (the authorized case); override `accountId`,
-// `role` or `id` to construct denial scenarios.
-function actorFor(user: UserRecord, account: AccountRecord, overrides: Partial<SessionUser> = {}): SessionUser {
-  return {
-    id: user.id,
-    email: user.email,
-    domain: "tenant",
-    role: "owner",
-    accountId: account.id,
-    ...overrides
-  };
-}
-
-function asCurrentUser(actor: SessionUser) {
-  vi.mocked(currentUser).mockResolvedValue(actor);
-}
 
 // Every action test starts from an account with a project → decision → assumption.
 async function seedAssumption() {
@@ -66,18 +41,20 @@ async function seedAssumption() {
 }
 
 beforeEach(() => {
-  vi.mocked(currentUser).mockReset();
+  resetCurrentUser();
 });
 
 describe("assumption comment actions", () => {
   describe("createAssumptionComment", () => {
     it("creates the comment with the actor as creator and returns it with preloads", async () => {
       const { user, account, assumption } = await seedAssumption();
+
       asCurrentUser(actorFor(user, account));
 
       const result = await createAssumptionComment({ assumptionId: assumption.id, body: sampleBody });
 
       expect(result.success).toBe(true);
+
       if (result.success) {
         expect(result.data.assumptionId).toBe(assumption.id);
         expect(result.data.creatorId).toBe(user.id);
