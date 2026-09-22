@@ -134,7 +134,6 @@ export function buildAssumptionRecord(overrides: Partial<NewAssumptionRecord> = 
     id: `${n}`,
     title: `Test Assumption ${n}`,
     rationale: null,
-    confidence: 0,
     decision_id: `decision-${n}`,
     creator_id: `creator-${n}`,
     created_at: now,

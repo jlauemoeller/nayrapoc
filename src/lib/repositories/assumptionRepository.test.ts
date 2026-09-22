@@ -292,7 +292,7 @@ describe("AssumptionRepository", () => {
           rationale_updated_at: longAgo
         });
 
-        const result = await AssumptionRepository.update(assumption.id, { title: "New Title", confidence: 0.5 }, db);
+        const result = await AssumptionRepository.update(assumption.id, { title: "New Title" }, db);
 
         expect(result.isOk()).toBe(true);
         if (result.isOk()) {

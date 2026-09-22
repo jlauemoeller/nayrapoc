@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AssumptionCommentList } from "@/components/assumption-comment-list";
-import { AssumptionConfidenceEditor } from "@/components/assumption-confidence-editor";
 import { AssumptionRationaleEditor } from "@/components/assumption-rationale-editor";
 import { AssumptionRationaleAIEvaluation } from "@/components/assumption-rationale-ai-evaluation";
 import { AssumptionService } from "@/lib/services/assumptionService";
@@ -57,9 +56,6 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
         assumes
       </div>
       <PageTitle title={<AssumptionTitleEditor assumption={assumption} editable={editable} />}></PageTitle>
-      <h3>Confidence</h3>
-      <div className="mb-2">How confident are we that this assumption holds?</div>
-      <AssumptionConfidenceEditor assumption={assumption} editable={editable} />
       <div className="flex flex-col gap-4 mt-6 mb-2">
         <div className="flex flex-row gap-4 items-baseline">
           <h3>Rationale</h3>

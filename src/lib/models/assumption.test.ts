@@ -15,7 +15,6 @@ import { expectSchemaToBeSubset } from "@/lib/testing/schemas";
 const fixture = {
   title: "title",
   rationale: [],
-  confidence: 1,
   decisionId: "00000000-0000-7000-8000-000000000001",
   creatorId: "00000000-0000-7000-8000-000000000002"
 };
@@ -49,19 +48,6 @@ describe("assumptionCreateSchema", () => {
     expect(assumptionCreateSchema.safeParse({ ...fixture, rationale: undefined }).success).toBe(true);
   });
 
-  it("rejects confidence outside 0–5", () => {
-    expect(assumptionCreateSchema.safeParse({ ...fixture, confidence: -1 }).success).toBe(false);
-    expect(assumptionCreateSchema.safeParse({ ...fixture, confidence: 6 }).success).toBe(false);
-  });
-
-  it("rejects null confidence", () => {
-    expect(assumptionCreateSchema.safeParse({ ...fixture, confidence: null }).success).toBe(false);
-  });
-
-  it("allows undefined confidence", () => {
-    expect(assumptionCreateSchema.safeParse({ ...fixture, confidence: undefined }).success).toBe(true);
-  });
-
   it("rejects decisionId that isn't a uuid", () => {
     expect(assumptionCreateSchema.safeParse({ ...fixture, decisionId: "A" }).success).toBe(false);
   });
@@ -73,7 +59,7 @@ describe("assumptionCreateSchema", () => {
 
 describe("assumptionFormSchema", () => {
   it("is derived from assumptionCreateSchema", () => {
-    expectSchemaToBeSubset(assumptionCreateSchema, assumptionFormSchema, ["title", "confidence"]);
+    expectSchemaToBeSubset(assumptionCreateSchema, assumptionFormSchema, ["title"]);
   });
 });
 
@@ -94,28 +80,11 @@ describe("assumptionUpdateSchema", () => {
     expect(assumptionUpdateSchema.safeParse({ ...fixture, title: undefined }).success).toBe(true);
   });
 
-  it("trims whitespace from title", () => {
-    expect(assumptionUpdateSchema.parse({ title: "  Trimmed  " }).title).toBe("Trimmed");
-  });
-  it("rejects confidence outside 0–5", () => {
-    expect(assumptionUpdateSchema.safeParse({ ...fixture, confidence: -1 }).success).toBe(false);
-    expect(assumptionUpdateSchema.safeParse({ ...fixture, confidence: 6 }).success).toBe(false);
-  });
-
-  it("rejects null confidence", () => {
-    expect(assumptionUpdateSchema.safeParse({ ...fixture, confidence: null }).success).toBe(false);
-  });
-
-  it("allows undefined confidence", () => {
-    expect(assumptionUpdateSchema.safeParse({ ...fixture, confidence: undefined }).success).toBe(true);
-  });
-
   it("strips decisionId and creatorId — they are never updatable", () => {
     const result = assumptionUpdateSchema.safeParse(fixture);
 
     expect(result.data).toEqual({
       title: fixture.title,
-      confidence: fixture.confidence,
       rationale: fixture.rationale
     });
   });
@@ -132,7 +101,6 @@ const assumptionRecordFixture: AssumptionRecord = {
   rationale_ai_rating: "addressed",
   decision_id: "00000000-0000-7000-8000-000000000002",
   creator_id: "00000000-0000-7000-8000-000000000003",
-  confidence: 1,
   created_at: new Date("2026-09-15T00:00:03"),
   updated_at: new Date("2026-09-15T00:00:04")
 };
@@ -151,7 +119,6 @@ describe("toAssumption", () => {
       rationaleAiRating: record.rationale_ai_rating,
       decisionId: record.decision_id,
       creatorId: record.creator_id,
-      confidence: record.confidence,
       createdAt: record.created_at,
       updatedAt: record.updated_at
     });
@@ -174,16 +141,14 @@ describe("toAssumtionCreateRecord", () => {
       title: "title",
       rationale: [],
       decisionId: "00000000-0000-7000-8000-000000000002",
-      creatorId: "00000000-0000-7000-8000-000000000003",
-      confidence: 1
+      creatorId: "00000000-0000-7000-8000-000000000003"
     };
 
     expect(toAssumptionCreateRecord(input)).toEqual({
       title: input.title,
       rationale: input.rationale,
       decision_id: input.decisionId,
-      creator_id: input.creatorId,
-      confidence: input.confidence
+      creator_id: input.creatorId
     });
   });
 });

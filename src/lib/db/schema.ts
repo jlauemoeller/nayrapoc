@@ -1,6 +1,6 @@
 import type { Block } from "@blocknote/core";
 import { generateId } from "./uuid";
-import { pgTable, primaryKey, uuid, text, real, timestamp, jsonb, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, uuid, text, timestamp, jsonb, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const userDomains = ["staff", "tenant"] as const;
 export const userRoles = ["owner", "admin", "member"] as const;
@@ -103,7 +103,6 @@ export const assumptions = pgTable("assumptions", {
   creator_id: uuid("creator_id")
     .references(() => users.id)
     .notNull(),
-  confidence: real("confidence"),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull()
 });

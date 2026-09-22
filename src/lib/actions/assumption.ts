@@ -39,8 +39,7 @@ export async function createAssumption(
   const validated = assumptionCreateSchema.safeParse({
     title: input.title,
     decisionId: input.decisionId,
-    creatorId: actor.id,
-    confidence: input.confidence
+    creatorId: actor.id
   });
 
   if (!validated.success) {
@@ -63,8 +62,7 @@ export async function updateAssumption(
   }
 
   const validated = assumptionUpdateSchema.safeParse({
-    title: input.title,
-    confidence: input.confidence
+    title: input.title
   });
 
   if (!validated.success) {

@@ -5,7 +5,6 @@ export * from "./assumption-icon";
 export * from "./cancel-icon";
 export * from "./check-icon";
 export * from "./clear-icon";
-export * from "./confidence-icon";
 export * from "./decision-icon";
 export * from "./delete-icon";
 export * from "./description-icon";

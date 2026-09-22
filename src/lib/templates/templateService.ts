@@ -70,7 +70,6 @@ export class TemplateService {
               {
                 title: assumption.title,
                 rationale: assumption.rationale,
-                confidence: assumption.confidence,
                 decision_id: newDecision.id,
                 creator_id: userId
               },

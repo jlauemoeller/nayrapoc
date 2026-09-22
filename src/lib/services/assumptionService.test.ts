@@ -31,7 +31,6 @@ describe("AssumptionService", () => {
 
       expect(result).toBeDefined();
       expect(result!.rationale).toBeUndefined();
-      expect(result!.confidence).toBeUndefined();
       expect(result!.rationaleUpdatedAt).toBeInstanceOf(Date);
       expect(result!.rationaleAiRequestedAt).toBeUndefined();
       expect(result!.rationaleAiEvaluatedAt).toBeUndefined();
@@ -209,7 +208,6 @@ describe("AssumptionService", () => {
         {
           title: "Load stays flat",
           rationale: sampleRationale,
-          confidence: 3,
           decisionId: decision.id,
           creatorId: user.id
         },
@@ -220,7 +218,6 @@ describe("AssumptionService", () => {
       if (result.isOk()) {
         expect(result.value.title).toBe("Load stays flat");
         expect(result.value.rationale).toEqual(sampleRationale);
-        expect(result.value.confidence).toBe(3);
         expect(result.value.decisionId).toBe(decision.id);
         expect(result.value.creatorId).toBe(user.id);
         expect(result.value.id).toBeDefined();
@@ -265,38 +262,21 @@ describe("AssumptionService", () => {
       const { user, decision } = await createDecisionWithProjectScenario(db);
       const assumption = await createAssumption(db, decision.id, user.id, { title: "Old" });
 
-      const result = await AssumptionService.update(assumption.id, { title: "New", confidence: 4 }, db);
+      const result = await AssumptionService.update(assumption.id, { title: "New" }, db);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.title).toBe("New");
-        expect(result.value.confidence).toBe(4);
       }
     });
 
-    it("leaves fields that are absent from the input unchanged", async () => {
-      const { user, decision } = await createDecisionWithProjectScenario(db);
-      const assumption = await createAssumption(db, decision.id, user.id, {
-        title: "Keep me",
-        rationale: sampleRationale
-      });
-
-      const result = await AssumptionService.update(assumption.id, { confidence: 2 }, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.title).toBe("Keep me");
-        expect(result.value.rationale).toEqual(sampleRationale);
-      }
-    });
-
-    // Editing title/confidence must not mark an existing AI evaluation as outdated.
+    // Editing title must not mark an existing AI evaluation as outdated.
     it("does not touch rationaleUpdatedAt when rationale is not updated", async () => {
       const { user, decision } = await createDecisionWithProjectScenario(db);
       const longAgo = new Date("2026-01-01T00:00:00Z");
       const assumption = await createAssumption(db, decision.id, user.id, { rationale_updated_at: longAgo });
 
-      const result = await AssumptionService.update(assumption.id, { title: "New", confidence: 4 }, db);
+      const result = await AssumptionService.update(assumption.id, { title: "New" }, db);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {

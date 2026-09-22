@@ -31,21 +31,18 @@ type LoadedFields<T extends LoadingContext> =
 // Input validation schemas
 
 const titleSchema = z.string().trim().min(1, "Title is required");
-const confidenceSchema = z.number().min(0).max(5);
 
 export const assumptionCreateSchema = z.object({
   title: titleSchema,
   rationale: blockDocumentSchema.optional(),
-  confidence: confidenceSchema.optional(),
   decisionId: z.uuid(),
   creatorId: z.uuid()
 });
 
-export const assumptionFormSchema = assumptionCreateSchema.pick({ title: true, confidence: true });
+export const assumptionFormSchema = assumptionCreateSchema.pick({ title: true });
 
 export const assumptionUpdateSchema = z.object({
   title: titleSchema.optional(),
-  confidence: confidenceSchema.optional(),
   rationale: blockDocumentSchema.optional(),
   rationaleUpdatedAt: z.date().optional(),
   rationaleAiEvaluatedAt: z.date().optional(),
@@ -67,7 +64,6 @@ export const assumptionSchema = z.object({
   rationaleAiRating: z.enum(rationaleAiRatings).optional(),
   decisionId: z.uuid(),
   creatorId: z.uuid(),
-  confidence: z.number().optional(),
   createdAt: z.date(),
   updatedAt: z.date()
 });
@@ -96,7 +92,6 @@ export function toAssumption(record: AssumptionRecord): Assumption<"basic"> {
     rationaleAiRating: record.rationale_ai_rating ?? undefined,
     decisionId: record.decision_id,
     creatorId: record.creator_id,
-    confidence: record.confidence ?? undefined,
     createdAt: record.created_at,
     updatedAt: record.updated_at
   };
@@ -109,15 +104,13 @@ export function toAssumptionCreateRecord(
     title: input.title,
     rationale: input.rationale,
     decision_id: input.decisionId,
-    creator_id: input.creatorId,
-    confidence: input.confidence
+    creator_id: input.creatorId
   };
 }
 
 export function toAssumptionUpdateRecord(input: AssumptionUpdateInput): Partial<NewAssumptionRecord> {
   return {
     title: input.title,
-    confidence: input.confidence,
     rationale: input.rationale,
     rationale_updated_at: input.rationaleUpdatedAt,
     rationale_ai_evaluated_at: input.rationaleAiEvaluatedAt,

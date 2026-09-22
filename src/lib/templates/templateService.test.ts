@@ -25,8 +25,7 @@ describe("TemplateService.cloneInto", () => {
       reviewed_at: new Date("2025-01-01T00:00:00Z")
     });
     const tAssumption = await createAssumption(db, tDecision.id, templateUser.id, {
-      title: "Template Assumption",
-      confidence: 3
+      title: "Template Assumption"
     });
 
     // Fresh target account with a single user.
@@ -57,7 +56,6 @@ describe("TemplateService.cloneInto", () => {
     const ca = clonedAssumptions[0];
     expect(ca.id).not.toBe(tAssumption.id);
     expect(ca.title).toBe("Template Assumption");
-    expect(ca.confidence).toBe(3);
     expect(ca.creator_id).toBe(newUser.id);
 
     // Template account itself is untouched.

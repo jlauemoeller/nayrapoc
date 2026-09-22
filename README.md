@@ -1,6 +1,6 @@
 # Nayra
 
-Nayra is a Proof-of-Concept implementation of a _Decision Journal_ providing project teams with a simple way to record their decisions and assumptions. Decisions can be assigned a future Review-By date to help the team remember to revisit past choices, and assumptions can be graded to reflect the team's confidence in them. This facilitates a more honest view of how well-founded a decision really is. Decision states (*proposed*, *rejected*, *active*, and *retired*) signals the current relevance of a decision, allowing everyone to understand which are still in effect, and which purely of historical importance.
+Nayra is a Proof-of-Concept implementation of a _Decision Journal_ providing project teams with a simple way to record their decisions and assumptions. Decisions can be assigned a future Review-By date to help the team remember to revisit past choices. Decision states (_proposed_, _rejected_, _active_, and _retired_) signals the current relevance of a decision, allowing everyone to understand which are still in effect, and which purely of historical importance.
 
 The purpose of this Proof-of-Concept was to further increase my working knowledge of TypeScript, React, and Next.js by exploring and evaluating a few ideas:
 
@@ -11,36 +11,36 @@ The purpose of this Proof-of-Concept was to further increase my working knowledg
 - Type-safe side-loading
 - Simple, policy-based authorization
 
-The outcome is a simple, but fully functional web application deployed in demo form [https://nayrapoc.iteray.com](https://nayrapoc.iteray.com) -- and a significant upgrade of my Typescript, React, and Next.js knowledge. 
+The outcome is a simple, but fully functional web application deployed in demo form [https://nayrapoc.iteray.com](https://nayrapoc.iteray.com) -- and a significant upgrade of my Typescript, React, and Next.js knowledge.
 
 ## Layered Architecture
 
-I wanted to experiment with how to structure a React/Next.js application and decided to partition it into four layers; going from furthest back (closest to the database) to front-end, I landed on: 
+I wanted to experiment with how to structure a React/Next.js application and decided to partition it into four layers; going from furthest back (closest to the database) to front-end, I landed on:
 
-- **Repositories** are responsible for low-level communication with the database library (Drizzle). They handle mapping to and from the database library schema structures and define the low-level storage API used by the service layer. Repositories form an abstraction barrier that protects the rest of the application from changes to the database library, index structures (and thus query optimization choices), and low-level constraints. The API is made up of record types (eg.`DecisionRecord`) derived automatically from the Drizzle schema using Drizzle's `InferSelectModel` template types, and CRUD functions such as `get()` or `create()`. 
+- **Repositories** are responsible for low-level communication with the database library (Drizzle). They handle mapping to and from the database library schema structures and define the low-level storage API used by the service layer. Repositories form an abstraction barrier that protects the rest of the application from changes to the database library, index structures (and thus query optimization choices), and low-level constraints. The API is made up of record types (eg.`DecisionRecord`) derived automatically from the Drizzle schema using Drizzle's `InferSelectModel` template types, and CRUD functions such as `get()` or `create()`.
 - **Services** encapsulate the repository layer and provides the API that the rest of the application works against. It is a relatively thin layer concerned mostly with providing a stable API, final input clean-up (such as trimming strings), and error translation (see later). Server-side components and pages use the service layer directly.
-- **Actions** implements the Next.js-specific API for client-side components, handle authorization via policies, and input validation via Zod. 
+- **Actions** implements the Next.js-specific API for client-side components, handle authorization via policies, and input validation via Zod.
 - **Front-end** code implements components and pages using React. Pages and server-side rendered components are responsible for performing authorization checks (using the same policies as the actions.)
 
-**Conclusion** - The architecture worked well and helped place responsibility in the code base. It does lead to some boilerplate when new models are introduced since a corresponding model, repository, and service implementation must also be added, along with, in many cases, accompanying actions. 
+**Conclusion** - The architecture worked well and helped place responsibility in the code base. It does lead to some boilerplate when new models are introduced since a corresponding model, repository, and service implementation must also be added, along with, in many cases, accompanying actions.
 
 ## Errors as Values
 
 Rather than reaching for exceptions to signal failure, I wanted to explore modeling errors as ordinary return values so failures live in a function's type signature. Coming from Elixir, this is familiar territory: the `{:ok, value}` / `{:error, reason}` tagged tuple is the same idea, and `Result<T, E>` (here via the [neverthrow](https://github.com/supermacro/neverthrow) library, which borrows heavily from Rust ideas) is essentially its statically-typed cousin. The payoff over `throw` in TypeScript is very concrete: TypeScript has no checked exceptions, so a thrown error is invisible to the type system and a `catch` clause hands you `unknown`. A `Result` puts the error type right in the signature, and the compiler then forces every caller to deal with it.
 
-In this example, the `update`  function on `ProjectService` is typed to return `Promise<Result<Project, ProjectServiceError>>` so a caller knows it must check the result (eg. using `r.isOk()`) before using it:
+In this example, the `update` function on `ProjectService` is typed to return `Promise<Result<Project, ProjectServiceError>>` so a caller knows it must check the result (eg. using `r.isOk()`) before using it:
 
 ```ts
 export class ProjectService {
   ...
-  
+
   static async update(
     projectId: string,
     input: ProjectUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Project, ProjectServiceError>> {
     const normalized = ...
-      
+
     const updated = await ProjectRepository.update(projectId, normalized, connection);
     return updated.map(toProject).orElse(toProjectServiceErrorResult);
   }
@@ -55,13 +55,13 @@ A key design decision was _which_ failures deserve this treatment. Turning genui
 
 Errors change shape as they cross layer boundaries, getting a little more domain-aware at each step:
 
-- **Repositories** wrap database writes in a `guarded()` function, which converts _only_ the constraint violations pre-registered via a handler (eg. `unique(...)`  or `notNull(...)`) into a typed `RecordError`; everything else re-throws.
+- **Repositories** wrap database writes in a `guarded()` function, which converts _only_ the constraint violations pre-registered via a handler (eg. `unique(...)` or `notNull(...)`) into a typed `RecordError`; everything else re-throws.
 - **Services** map that to a `ServiceError` keyed on the domain model, typically by chaining: `result.map(toModel).orElse(toServiceErrorResult)`. The `map`/`orElse` style is sometimes called _railway-oriented programming_ as the happy path and the error path run on parallel tracks and you compose along whichever one you're on, without manual `if (!r.ok())` checks at every step.
 - **Actions** convert the `Result` into a plain `ActionResult` object (`{ success, data } | { success, error }`) so it can cross the server/client boundary into an HTML form, since a `Result` instance can't be serialized over the wire.
 
 Transactions fit the same model: the `transactionResult` wrapper function initiates rolls back automatically when its callback returns an `err(...)`, so a returned error and a database rollback are the same event.
 
-**Conclusion** - Errors-as-values worked well and the type system genuinely earned its keep. Refactors that changed a failure mode showed up as compile errors at exactly the call sites that needed updating. The discipline of explicitly classifying each failure as expected or unexpected was the valuable part; neverthrow's combinators made the chaining ergonomic, though the `Result` to `ActionResult` conversion at the server/client boundary is a reminder that the pattern stops at the edges of the type-safe world. 
+**Conclusion** - Errors-as-values worked well and the type system genuinely earned its keep. Refactors that changed a failure mode showed up as compile errors at exactly the call sites that needed updating. The discipline of explicitly classifying each failure as expected or unexpected was the valuable part; neverthrow's combinators made the chaining ergonomic, though the `Result` to `ActionResult` conversion at the server/client boundary is a reminder that the pattern stops at the edges of the type-safe world.
 
 One complication I ran into during implementation was mapping from database-level column names to TypeScript / domain-level names in `toServiceErrorReuslt`: my database schema uses traditional snake-case such as `account_id` but the rest of the code expects camel-cased names. Errors originating in the database (such as as a NOT NULL error) carries the snake-cased name and this needs to be converted to it's corresponding camel-cased counterpart in order to fit into the form error reporting. Rather than forcing one domain to use a "foreign" naming convention, handwriting conversion functions, or escaping through untyped strings, I solved it using a template literal type which computes the camel-cased field type at compile time, ensuring type safety. This does rely on the convention that a snake-cased name in the database should _always_ be mapped to it's camel-case version, but that seems reasonable:
 
@@ -74,7 +74,7 @@ function camelizeKey<T extends string>(key: T): SnakeToCamel<T> {
 }
 ```
 
-Finally, I had to take care to ensure that any `err(...)` returned from a transaction ultimately leave as an exception as Drizzle won't initiate a database roll back otherwise. This is handled by the function `awaitTransactionResult`  which starts and encapsulates the Drizzle transaction and converts from result, to exception, and back again.
+Finally, I had to take care to ensure that any `err(...)` returned from a transaction ultimately leave as an exception as Drizzle won't initiate a database roll back otherwise. This is handled by the function `awaitTransactionResult` which starts and encapsulates the Drizzle transaction and converts from result, to exception, and back again.
 
 ## UI Components
 
@@ -82,7 +82,7 @@ I wanted to explore building a React UI based on the popular [shadcn](https://ui
 
 **Conclusion** - Building with these libraries was extremely easy, and the range of components they offer serves most common needs. I am mostly constrained by my limited design skills. It would be nice to have more application-skeleton level components (blocks) but these are either available as commercial blocks or can be built by hand by composing the lower-level components. Styling with Tailwind CSS was straightforward. Documentation is excellent.
 
-Both shadcn and Dice vendor their components into the source tree; this is both a blessing and a curse: because the code is vendored you can tweak it to your needs, but in doing so you run the risk of complicating the addition of future components, if they rely on later versions of your tweaked components. Another issue I ran into a few times was that shadcn doesn't specify which version of Radix its components expect and on a few occasions these came out of lock step and required manual intervention. This would typically happen when a component added early in the project implicitly depended on a version of a Radix component that was then updated by a later addition. It wasn't a big issue, but something to be aware of. 
+Both shadcn and Dice vendor their components into the source tree; this is both a blessing and a curse: because the code is vendored you can tweak it to your needs, but in doing so you run the risk of complicating the addition of future components, if they rely on later versions of your tweaked components. Another issue I ran into a few times was that shadcn doesn't specify which version of Radix its components expect and on a few occasions these came out of lock step and required manual intervention. This would typically happen when a component added early in the project implicitly depended on a version of a Radix component that was then updated by a later addition. It wasn't a big issue, but something to be aware of.
 
 ## Drizzle as the Database Layer
 
@@ -92,24 +92,21 @@ In my experience, many high-level ORMs do too much in an effort to appear magica
 
 ## Type-safe Side-loading
 
-One of the great promises of statically typed languages is that you can leverage the type system to prevent whole classes of logical errors. In this project, I wanted to explore ways to let functions and components signal what side-loaded information they require through their type signatures. As an example, a component that displays a `Decision` along with creator information would also need the corresponding creator (a `User` record). There are several ways to solve this; sometimes the caller performs two loads, sometimes the component issue an extra load for the additional information required, and sometimes specialized loading functions load all information at once. The latter is usually necessary if the information is displayed in bulk. 
+One of the great promises of statically typed languages is that you can leverage the type system to prevent whole classes of logical errors. In this project, I wanted to explore ways to let functions and components signal what side-loaded information they require through their type signatures. As an example, a component that displays a `Decision` along with creator information would also need the corresponding creator (a `User` record). There are several ways to solve this; sometimes the caller performs two loads, sometimes the component issue an extra load for the additional information required, and sometimes specialized loading functions load all information at once. The latter is usually necessary if the information is displayed in bulk.
 
 The solution explored here is to introduce _loading contexts_ which allow type-level specification of required side-loads. In the `Decision` example, the UI component would specify the type of its `decision` prop to be `Decision<"with-creator">` rather than just `Decision`. With this approach the component expresses the exact data it needs through its prop types, enforcing the caller to perform the required side-loading to obtain a component of the correct type. It can then do so in the most performant way according to how the component is used. As an added bonus, this also facilitates a much improved developer experience since the language server can show both the required side-loads (at the caller side) and the available side-loaded data (at the consumer side).
 
-The example below shows two getters on the `DecisionService`. One returns a plain `Decision`  with no side-loads, the other includes `Creator` information:
+The example below shows two getters on the `DecisionService`. One returns a plain `Decision` with no side-loads, the other includes `Creator` information:
 
 ```ts
 export class DecisionService {
   // ...
-    
-  static async get(
-    decisionId: string, 
-     connection: DbConnection = db
-  ): Promise<Decision | undefined> {
+
+  static async get(decisionId: string, connection: DbConnection = db): Promise<Decision | undefined> {
     const record = await DecisionRepository.get(decisionId, connection);
     return toDecisionIfAny(record);
   }
- 
+
   static async getWithCreator(
     decisionId: string,
     connection: DbConnection = db
@@ -122,10 +119,7 @@ export class DecisionService {
     projectId: string,
     connection: DbConnection = db
   ): Promise<Decision<"with-creator">[]> {
-    const records = await DecisionRepository.listWithCreatorForProject(
-        projectId, 
-        connection
-    );
+    const records = await DecisionRepository.listWithCreatorForProject(projectId, connection);
     return records.map(toDecisionWithCreator);
   }
   // ...
@@ -135,10 +129,7 @@ export class DecisionService {
 This is based on the model level type definitions
 
 ```ts
-type LoadingContext = "basic" 
-  | "with-project" 
-  | "with-creator" 
-  | "with-project-and-creator";
+type LoadingContext = "basic" | "with-project" | "with-creator" | "with-project-and-creator";
 
 type LoadedFields<T extends LoadingContext> =
   T extends "with-project" ? { project: Project }
@@ -148,7 +139,6 @@ type LoadedFields<T extends LoadingContext> =
     {};
 
 export type Decision<T extends LoadingContext = "basic"> = z.infer<typeof decisionSchema> & LoadedFields<T>;
-
 ```
 
 It follows that a `Decision<"with-creator">` simply has an extra `creator` field which contains the side-loaded account data. The repository can then fetch the desired side-loads all at once, if needed:
@@ -204,11 +194,11 @@ A few notable observations:
 
 ## AI Disclosure
 
-Claude Code was used as a paring partner throughout the project, and provided assistance with concrete TypeScript or Next.js difficulties and test implementation. I instructed Claude to behave as a mentor and gave it an honest characterization of my current TypeScript and Next.js experience. To help it draw upon my existing knowledge when explaining concepts, I told it about my significant experience from other platforms such as Elixir, Ruby, and JavaScript. 
+Claude Code was used as a paring partner throughout the project, and provided assistance with concrete TypeScript or Next.js difficulties and test implementation. I instructed Claude to behave as a mentor and gave it an honest characterization of my current TypeScript and Next.js experience. To help it draw upon my existing knowledge when explaining concepts, I told it about my significant experience from other platforms such as Elixir, Ruby, and JavaScript.
 
 Claude wrote most of the utility scripts for dumping and loading the demo database, deploying the demo using Docker, and the code for uploading files to object storage, as these were all considered out of scope for project. I also used Claude to bounce architecture ideas around and for code review wrt. idiomatic Next.js use.
 
-**Conclusion** - Framing Claude as a pairing partner rather than a "coding agent" proved a significant enabler. I felt like I was in the driver's seat and _learned_ rather than _observed_. This, to me, is the difference between _AI assisted_ and _AI driven_ development and was very enjoyable. I would not have been able to go from idea to final POC in just a few weeks without the ability to ask deep questions about TypeScript's type system or Next.js and would instead have spent much more time trawling through online documentation. 
+**Conclusion** - Framing Claude as a pairing partner rather than a "coding agent" proved a significant enabler. I felt like I was in the driver's seat and _learned_ rather than _observed_. This, to me, is the difference between _AI assisted_ and _AI driven_ development and was very enjoyable. I would not have been able to go from idea to final POC in just a few weeks without the ability to ask deep questions about TypeScript's type system or Next.js and would instead have spent much more time trawling through online documentation.
 
 ## Data Model
 
@@ -216,7 +206,6 @@ Claude wrote most of the utility scripts for dumping and loading the demo databa
 - Every `Project` has a creator (`User`) who initiated the project.
 - A `Project` has zero or more `Decisions`, each created by a `User`.
 - A `Decision` has zero or more `Assumptions`, each created by a User. Decisions can be given a review-by date and has a state that indicates its current standing (_proposed_, _rejected_, _active_, _retired_)
-- An `Assumption` can have a confidence level expressing how sure the team feels about it.
 
 ## Prerequisites
 

@@ -57,13 +57,12 @@ describe("assumption actions", () => {
       const { user, account, decision } = await seedAccountWithDecision();
       asCurrentUser(actorFor(user, account));
 
-      const result = await createAssumption({ title: "Load stays flat", confidence: 3, decisionId: decision.id });
+      const result = await createAssumption({ title: "Load stays flat", decisionId: decision.id });
 
       expect(result.success).toBe(true);
 
       if (result.success) {
         expect(result.data.title).toBe("Load stays flat");
-        expect(result.data.confidence).toBe(3);
         expect(result.data.decisionId).toBe(decision.id);
         expect(result.data.creatorId).toBe(user.id);
       }
@@ -84,16 +83,6 @@ describe("assumption actions", () => {
       asCurrentUser(actorFor(user, account));
 
       const result = await createAssumption({ title: "   ", decisionId: decision.id });
-
-      expect(result).toEqual(INVALID_INPUT);
-      expect(await AssumptionService.listForDecision(decision.id, db)).toEqual([]);
-    });
-
-    it("rejects an out-of-range confidence as invalid input", async () => {
-      const { user, account, decision } = await seedAccountWithDecision();
-      asCurrentUser(actorFor(user, account));
-
-      const result = await createAssumption({ title: "Load stays flat", confidence: 6, decisionId: decision.id });
 
       expect(result).toEqual(INVALID_INPUT);
       expect(await AssumptionService.listForDecision(decision.id, db)).toEqual([]);
@@ -130,17 +119,16 @@ describe("assumption actions", () => {
   });
 
   describe("updateAssumption", () => {
-    it("updates the title and confidence on success", async () => {
+    it("updates the title on success", async () => {
       const { user, account, assumption } = await seedAccountWithAssumption();
       asCurrentUser(actorFor(user, account));
 
-      const result = await updateAssumption(assumption.id, { title: "New", confidence: 4 });
+      const result = await updateAssumption(assumption.id, { title: "New" });
 
       expect(result.success).toBe(true);
 
       if (result.success) {
         expect(result.data.title).toBe("New");
-        expect(result.data.confidence).toBe(4);
       }
     });
 

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Assumption } from "@/lib/models/assumption";
 import { AssumptionIcon, DetailIcon } from "@/components/icons";
-import { ConfidenceView } from "@/components/confidence-view";
 import { Item, ItemActions, ItemMedia, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 
 type AssumptionPreviewItemProps = {
@@ -17,7 +16,6 @@ export function AssumptionPreviewItem({ assumption }: AssumptionPreviewItemProps
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{assumption.title}</ItemTitle>
-          <ConfidenceView value={assumption.confidence ?? 0} editable={false} size={"sm"} />
           <ItemDescription>Click to view assumption details</ItemDescription>
         </ItemContent>
         <ItemActions>
