@@ -13,6 +13,7 @@ import { canViewAssumption, canUpdateAssumption, canDeleteAssumption } from "@/l
 import { currentUser, assertAuthorized } from "@/lib/authorization";
 import { redirect } from "next/navigation";
 import { AssumptionCommentService } from "@/lib/services/assumptionCommentService";
+import { UserActionTagline } from "@/components/user-action-tagline";
 
 type AssumptionPageParams = {
   params: Promise<{ assumption_id: string }>;
@@ -34,7 +35,7 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
 
   const breadcrumbs = [
     { name: assumption.decision.project.name, link: `/projects/${assumption.decision.projectId}` },
-    { name: "Decision", link: `/decisions/${assumption.decisionId}` }
+    { name: assumption.decision.title, link: `/decisions/${assumption.decisionId}` }
   ];
 
   return (
@@ -48,14 +49,10 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
           </Button>
         }
       </div>
-      <div className="text-sm mt-4 text-muted-foreground">
-        The decision{" "}
-        <Link className="link" href={`/decisions/${assumption.decisionId}`}>
-          {assumption.decision.title}
-        </Link>{" "}
-        assumes
-      </div>
       <PageTitle title={<AssumptionTitleEditor assumption={assumption} editable={editable} />}></PageTitle>
+      <div className="text-xs text-muted-foreground">
+        <UserActionTagline action="Created" date={assumption.createdAt} user={assumption.creator} />
+      </div>
       <div className="flex flex-col gap-4 mt-6 mb-2">
         <div className="flex flex-row gap-4 items-baseline">
           <h3>Rationale</h3>
