@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { DecisionRationaleEditor } from "@/components/decision-rationale-editor";
 import { DecisionReviewByEditor } from "@/components/decision-review-by-editor";
 import { DecisionService } from "@/lib/services/decisionService";
-import { DecisionStateBadge } from "@/components/decision-state-badge";
 import { DecisionStateEditor } from "@/components/decision-state-editor";
 import { DecisionTitleEditor } from "@/components/decision-title-editor";
 import { DeleteDecisionDialog } from "@/components/delete-decision-dialog";
@@ -17,6 +16,7 @@ import { canCreateAssumption } from "@/lib/policies/assumption";
 import { canViewDecision, canUpdateDecision, canDeleteDecision } from "@/lib/policies/decision";
 import { currentUser, assertAuthorized } from "@/lib/authorization";
 import { notFound } from "next/navigation";
+import { UserActionTagline } from "@/components/user-action-tagline";
 
 type DecisionPageParams = {
   params: Promise<{ decision_id: string }>;
@@ -41,10 +41,9 @@ export default async function DecisionPage({ params }: DecisionPageParams) {
 
   return (
     <div className="container mx-auto pb-4 flex flex-col">
-      <div className="flex flex-col md:flex-row md:justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between items-center">
         <Breadcrumbs path={breadcrumbs} page="Decision" />
         <div className="flex flex-row items-center gap-4">
-          <DecisionStateBadge decision={decision} />
           {canDeleteDecision(actor, decision) ?
             <DeleteDecisionDialog decision={decision} />
           : <Button variant="destructive" disabled>
@@ -55,10 +54,7 @@ export default async function DecisionPage({ params }: DecisionPageParams) {
       </div>
       <PageTitle title={<DecisionTitleEditor decision={decision} editable={editable} />}></PageTitle>
       <div className="text-xs text-muted-foreground">
-        <span>
-          Created <RelativeTimeCard className="text-xs text-muted-foreground" date={decision.createdAt} /> by{" "}
-          {decision.creator.firstName} {decision.creator.lastName}
-        </span>
+        <UserActionTagline action="Created" date={decision.createdAt} user={decision.creator} />
         <span> &mdash; </span>
         {decision.reviewedAt ?
           <span>
