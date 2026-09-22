@@ -72,12 +72,12 @@ export default async function DecisionPage({ params }: DecisionPageParams) {
         <MarkDecisionAsReviewedAction decision={decision} editable={editable} />
       </div>
       <div className="flex flex-col gap-4 mt-8">
-        <h3>Assumptions</h3>
-        <AssumptionPreviewList decision={decision} assumptions={assumptions} editable={assumptionsEditable} />
-      </div>
-      <div className="flex flex-col gap-4 mt-8">
         <h3>Rationale</h3>
         <DecisionRationaleEditor decision={decision} editable={editable} />
+      </div>
+      <div className="flex flex-col gap-4 mt-8">
+        <h3>Assumptions</h3>
+        <AssumptionPreviewList decision={decision} assumptions={assumptions} editable={assumptionsEditable} />
       </div>
     </div>
   );
