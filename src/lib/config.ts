@@ -104,3 +104,9 @@ export const authConfig = {
     return requireEnv("NEXTAUTH_URL");
   }
 } as const;
+
+export const aiConfig = {
+  get anthropicApiKey() {
+    return requireEnv("ANTHROPIC_API_KEY");
+  }
+} as const;

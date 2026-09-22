@@ -2,7 +2,7 @@ import {
   AssumptionCommentRecordError,
   AssumptionCommentRepository
 } from "@/lib/repositories/assumptionCommentRepository";
-import { DbConnection } from "@/lib/db/connection";
+import { DbConnection, transaction, transactionResult } from "@/lib/db/connection";
 import { Result } from "neverthrow";
 import { ServiceError, toServiceErrorResult } from "@/lib/services/service";
 import { db } from "@/lib/db";
@@ -20,6 +20,7 @@ import {
   toAssumptionCommentWithAssumptionCreatorAndResolverIfAny,
   toAssumptionCommentWithCreatorAndResolver
 } from "@/lib/models/relations";
+import { requestAssumptionEvaluation } from "../jobs/scheduler";
 
 export type AssumptionCommentServiceError = ServiceError<AssumptionComment>;
 
@@ -66,9 +67,16 @@ export class AssumptionCommentService {
     input: AssumptionCommentCreateInput,
     connection: DbConnection = db
   ): Promise<Result<AssumptionComment, AssumptionCommentServiceError>> {
-    const assumptionCommentData = toAssumptionCommentCreateRecord(input);
-    const record = await AssumptionCommentRepository.create(assumptionCommentData, connection);
-    return record.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
+    return await transactionResult(async (tx) => {
+      const assumptionCommentData = toAssumptionCommentCreateRecord(input);
+      const record = await AssumptionCommentRepository.create(assumptionCommentData, tx);
+
+      if (record.isOk()) {
+        await requestAssumptionEvaluation(input.assumptionId, tx);
+      }
+
+      return record.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
+    }, connection);
   }
 
   static async update(
@@ -76,12 +84,27 @@ export class AssumptionCommentService {
     input: AssumptionCommentUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<AssumptionComment, AssumptionCommentServiceError>> {
-    const assumptionCommentData = toAssumptionCommentUpdateRecord(input);
-    const updated = await AssumptionCommentRepository.update(assumptionCommentId, assumptionCommentData, connection);
-    return updated.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
+    return await transactionResult(async (tx) => {
+      const changes = toAssumptionCommentUpdateRecord(input);
+      const updated = await AssumptionCommentRepository.update(assumptionCommentId, changes, tx);
+
+      if (updated.isOk()) {
+        await requestAssumptionEvaluation(updated.value.assumption_id, tx);
+      }
+
+      return updated.map(toAssumptionComment).orElse(toAssumptionCommentServiceErrorResult);
+    }, connection);
   }
 
   static async delete(assumptionCommentId: string, connection: DbConnection = db): Promise<boolean> {
-    return await AssumptionCommentRepository.delete(assumptionCommentId, connection);
+    return await transaction(async (tx) => {
+      const deleted = await AssumptionCommentRepository.delete(assumptionCommentId, tx);
+
+      if (deleted) {
+        await requestAssumptionEvaluation(deleted.assumption_id, tx);
+      }
+
+      return deleted !== undefined;
+    }, connection);
   }
 }

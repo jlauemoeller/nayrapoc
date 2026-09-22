@@ -66,7 +66,7 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
           {editable && <span className="text-muted-foreground text-xs">(Click and type to edit)</span>}
         </div>
         <AssumptionRationaleEditor assumption={assumption} editable={editable} />
-        <AssumptionRationaleAIEvaluation />
+        <AssumptionRationaleAIEvaluation assumption={assumption} />
       </div>
       <h3 className="mb-4">Discussion</h3>
       <AssumptionCommentList actor={actor} assumption={assumption} initialComments={comments} />

@@ -4,6 +4,7 @@ import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { appConfig } from "@lib/config";
 import * as schema from "@lib/db/schema";
+import { stopBoss } from "@lib/jobs/boss";
 
 // Arbitrary stable ID — every test file claims the same lock so they serialize
 // across workers (vitest can otherwise overlap files in watch mode).
@@ -25,6 +26,9 @@ export function setupTestDb() {
 
   afterAll(async () => {
     try {
+      // Services enqueue pg-boss jobs; if any test started the shared instance,
+      // its pool must be closed or the worker never exits. No-op otherwise.
+      await stopBoss();
       await client`SELECT pg_advisory_unlock(${TEST_DB_LOCK_ID})`;
     } finally {
       await client.end();

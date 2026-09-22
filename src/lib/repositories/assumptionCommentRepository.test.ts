@@ -228,17 +228,17 @@ describe("AssumptionCommentRepository", () => {
   });
 
   describe("delete", () => {
-    it("returns true when the comment exists", async () => {
+    it("returns the deleted record when the comment exists", async () => {
       const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
       const result = await AssumptionCommentRepository.delete(unresolvedComment.id, db);
 
-      expect(result).toBe(true);
+      expect(result?.id).toBe(unresolvedComment.id);
     });
 
-    it("returns false when the comment does not exist", async () => {
+    it("returns undefined when the comment does not exist", async () => {
       const result = await AssumptionCommentRepository.delete("00000000-0000-7000-8000-000000000000", db);
-      expect(result).toBe(false);
+      expect(result).toBeUndefined();
     });
 
     it("actually removes the comment from the database", async () => {

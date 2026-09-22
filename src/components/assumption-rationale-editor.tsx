@@ -6,6 +6,7 @@ import { BlockEditor } from "@/components/block-editor";
 import { toast } from "sonner";
 import { updateAssumptionRationale } from "@/lib/actions/assumption";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { useRouter } from "next/navigation";
 
 type AssumptionRationaleEditorProps = {
   assumption: Assumption;
@@ -13,6 +14,8 @@ type AssumptionRationaleEditorProps = {
 };
 
 export function AssumptionRationaleEditor({ assumption, ...props }: AssumptionRationaleEditorProps) {
+  const router = useRouter();
+
   const debouncedSave = useDebouncedCallback((changed: Block[]) => {
     updateAssumptionRationale(assumption.id, changed).then((result) => {
       if (!result.success) {
@@ -20,6 +23,8 @@ export function AssumptionRationaleEditor({ assumption, ...props }: AssumptionRa
           position: "top-center"
         });
       }
+
+      router.refresh();
     });
   }, 300);
 

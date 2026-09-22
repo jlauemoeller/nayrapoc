@@ -8,6 +8,9 @@ import { blockDocumentSchema } from "./blockDocument";
 export type AssumptionRecord = InferSelectModel<typeof assumptions>;
 export type NewAssumptionRecord = InferInsertModel<typeof assumptions>;
 
+export { rationaleAiRatings };
+export type RationaleAiRatings = (typeof rationaleAiRatings)[number];
+
 // Loading context types.
 // `creator` is the assumption's own author; `project` is always loaded via the decision.
 type LoadingContext =
@@ -38,15 +41,17 @@ export const assumptionCreateSchema = z.object({
   creatorId: z.uuid()
 });
 
-// The fields the create form actually collects. `decisionId` is contextual (route/props)
-// and `creatorId` is server-derived (the actor) — neither is user-editable. Shared by the
-// form resolver and the action's `actionResult` field set so client-attributable errors
-// line up on both sides.
 export const assumptionFormSchema = assumptionCreateSchema.pick({ title: true, confidence: true });
 
 export const assumptionUpdateSchema = z.object({
   title: titleSchema.optional(),
-  confidence: confidenceSchema.optional()
+  confidence: confidenceSchema.optional(),
+  rationale: blockDocumentSchema.optional(),
+  rationaleUpdatedAt: z.date().optional(),
+  rationaleAiEvaluatedAt: z.date().optional(),
+  rationaleAiRequestedAt: z.date().optional(),
+  rationaleAiEvaluation: z.string().optional(),
+  rationaleAiRating: z.enum(rationaleAiRatings).optional()
 });
 
 // Domain schemas
@@ -109,12 +114,25 @@ export function toAssumptionCreateRecord(
   };
 }
 
+export function toAssumptionUpdateRecord(input: AssumptionUpdateInput): Partial<NewAssumptionRecord> {
+  return {
+    title: input.title,
+    confidence: input.confidence,
+    rationale: input.rationale,
+    rationale_updated_at: input.rationaleUpdatedAt,
+    rationale_ai_evaluated_at: input.rationaleAiEvaluatedAt,
+    rationale_ai_requested_at: input.rationaleAiRequestedAt,
+    rationale_ai_evaluation: input.rationaleAiEvaluation,
+    rationale_ai_rating: input.rationaleAiRating
+  };
+}
+
 export const evaluationStatuses = ["missing", "pending", "outdated", "current"] as const;
 export type EvaluationStatus = (typeof evaluationStatuses)[number];
 export function evaluationStatus(a: Assumption): EvaluationStatus {
   if (a.rationaleAiEvaluatedAt === undefined) return "missing";
-  if (a.rationaleAiEvaluatedAt < a.rationaleUpdatedAt) return "outdated";
   if (a.rationaleAiRequestedAt && a.rationaleAiRequestedAt > a.rationaleAiEvaluatedAt) return "pending";
+  if (a.rationaleAiEvaluatedAt < a.rationaleUpdatedAt) return "outdated";
 
   return "current";
 }

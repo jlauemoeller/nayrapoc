@@ -91,7 +91,7 @@ export async function updateAssumptionRationale(
     return invalidInput();
   }
 
-  const result = await AssumptionService.updateRationale(assumptionId, validated.data);
+  const result = await AssumptionService.update(assumptionId, { rationale: validated.data });
   return actionResult(result, assumptionUpdateSchema.keyof().options);
 }
 

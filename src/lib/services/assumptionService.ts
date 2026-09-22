@@ -1,6 +1,5 @@
-import type { Block } from "@blocknote/core";
 import { AssumptionRecordError, AssumptionRepository } from "@/lib/repositories/assumptionRepository";
-import { DbConnection } from "@/lib/db/connection";
+import { DbConnection, transactionResult } from "@/lib/db/connection";
 import { Result } from "neverthrow";
 import { ServiceError, toServiceErrorResult } from "@/lib/services/service";
 import { db } from "@/lib/db";
@@ -10,7 +9,8 @@ import {
   AssumptionUpdateInput,
   toAssumption,
   toAssumptionIfAny,
-  toAssumptionCreateRecord
+  toAssumptionCreateRecord,
+  toAssumptionUpdateRecord
 } from "@/lib/models/assumption";
 import {
   toAssumptionWithDecisionAndCreator,
@@ -19,6 +19,7 @@ import {
   toAssumptionWithDecisionCreatorAndProjectIfAny,
   toAssumptionWithDecisionIfAny
 } from "@/lib/models/relations";
+import { requestAssumptionEvaluation } from "../jobs/scheduler";
 
 export type AssumptionServiceError = ServiceError<Assumption>;
 
@@ -86,9 +87,16 @@ export class AssumptionService {
     input: AssumptionCreateInput,
     connection: DbConnection = db
   ): Promise<Result<Assumption, AssumptionServiceError>> {
-    const assumptionData = toAssumptionCreateRecord(input);
-    const record = await AssumptionRepository.create(assumptionData, connection);
-    return record.map(toAssumption).orElse(toAssumptionServiceErrorResult);
+    return await transactionResult(async (tx) => {
+      const assumptionData = toAssumptionCreateRecord(input);
+      const record = await AssumptionRepository.create(assumptionData, tx);
+
+      if (record.isOk() && assumptionData.rationale) {
+        await requestAssumptionEvaluation(record.value.id, tx);
+      }
+
+      return record.map(toAssumption).orElse(toAssumptionServiceErrorResult);
+    }, connection);
   }
 
   static async update(
@@ -96,22 +104,16 @@ export class AssumptionService {
     input: AssumptionUpdateInput,
     connection: DbConnection = db
   ): Promise<Result<Assumption, AssumptionServiceError>> {
-    const changes = {
-      title: input.title,
-      confidence: input.confidence
-    };
+    return await transactionResult(async (tx) => {
+      const changes = toAssumptionUpdateRecord(input);
+      const updated = await AssumptionRepository.update(assumptionId, changes, tx);
 
-    const updated = await AssumptionRepository.update(assumptionId, changes, connection);
-    return updated.map(toAssumption).orElse(toAssumptionServiceErrorResult);
-  }
+      if (updated.isOk() && input.rationale) {
+        await requestAssumptionEvaluation(assumptionId, tx);
+      }
 
-  static async updateRationale(
-    assumptionId: string,
-    rationale: Block[],
-    connection: DbConnection = db
-  ): Promise<Result<Assumption, AssumptionServiceError>> {
-    const updated = await AssumptionRepository.update(assumptionId, { rationale }, connection);
-    return updated.map(toAssumption).orElse(toAssumptionServiceErrorResult);
+      return updated.map(toAssumption).orElse(toAssumptionServiceErrorResult);
+    }, connection);
   }
 
   static async delete(assumptionId: string, connection: DbConnection = db): Promise<boolean> {

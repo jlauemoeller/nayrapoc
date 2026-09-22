@@ -1,7 +1,7 @@
 import type { PgBoss } from "pg-boss";
 import { getBoss } from "./boss";
 import { QUEUES } from "./queues";
-
+import { EvaluateAssumptionJob, evaluateAssumption } from "./evaluateAssumption";
 /**
  * Register every worker and cron schedule on the shared pg-boss instance.
  *
@@ -19,12 +19,10 @@ import { QUEUES } from "./queues";
 export async function startWorkers(): Promise<PgBoss> {
   const boss = await getBoss();
 
-  // Handlers receive an array of jobs (batchSize defaults to 1).
-  //
-  // await boss.work<EvaluateAssumptionJob>(QUEUES.evaluateAssumption, async ([job]) => {
-  //   await evaluateAssumption(job.data);
-  // });
-  //
+  await boss.work<EvaluateAssumptionJob>(QUEUES.evaluateAssumption, async ([job]) => {
+    await evaluateAssumption(job.data);
+  });
+
   // await boss.work(QUEUES.sweepStaleEvaluations, async () => {
   //   await sweepStaleEvaluations();
   // });

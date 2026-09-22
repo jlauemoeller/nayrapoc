@@ -133,8 +133,10 @@ export class AssumptionCommentRepository {
     });
   }
 
-  static async delete(id: string, connection: DbConnection = db): Promise<boolean> {
-    const result = await connection.delete(assumptionComments).where(eq(assumptionComments.id, id)).returning();
-    return result.length > 0;
+  // Returns the deleted record so callers can act on it (e.g. re-evaluate its assumption),
+  // or `undefined` when nothing matched — the same shape as an optional read.
+  static async delete(id: string, connection: DbConnection = db): Promise<AssumptionCommentRecord | undefined> {
+    const [deleted] = await connection.delete(assumptionComments).where(eq(assumptionComments.id, id)).returning();
+    return deleted;
   }
 }

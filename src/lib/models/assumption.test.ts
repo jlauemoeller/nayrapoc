@@ -110,12 +110,13 @@ describe("assumptionUpdateSchema", () => {
     expect(assumptionUpdateSchema.safeParse({ ...fixture, confidence: undefined }).success).toBe(true);
   });
 
-  it("only allows tiotle and confidence to be set", () => {
+  it("strips decisionId and creatorId — they are never updatable", () => {
     const result = assumptionUpdateSchema.safeParse(fixture);
 
     expect(result.data).toEqual({
       title: fixture.title,
-      confidence: fixture.confidence
+      confidence: fixture.confidence,
+      rationale: fixture.rationale
     });
   });
 });

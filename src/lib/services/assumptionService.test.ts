@@ -291,7 +291,7 @@ describe("AssumptionService", () => {
     });
 
     // Editing title/confidence must not mark an existing AI evaluation as outdated.
-    it("does not touch rationaleUpdatedAt", async () => {
+    it("does not touch rationaleUpdatedAt when rationale is not updated", async () => {
       const { user, decision } = await createDecisionWithProjectScenario(db);
       const longAgo = new Date("2026-01-01T00:00:00Z");
       const assumption = await createAssumption(db, decision.id, user.id, { rationale_updated_at: longAgo });
@@ -309,14 +309,13 @@ describe("AssumptionService", () => {
         AssumptionService.update("00000000-0000-7000-8000-000000000000", { title: "Ghost" }, db)
       ).rejects.toThrow("update failed");
     });
-  });
 
-  describe("updateRationale", () => {
-    it("persists the document and round-trips it unchanged", async () => {
+    it("persists the rationale when specified and updates rationaleUpdatedAt", async () => {
       const { user, decision } = await createDecisionWithProjectScenario(db);
-      const assumption = await createAssumption(db, decision.id, user.id);
+      const longAgo = new Date("2026-01-01T00:00:00Z");
+      const assumption = await createAssumption(db, decision.id, user.id, { rationale_updated_at: longAgo });
 
-      const result = await AssumptionService.updateRationale(assumption.id, sampleRationale, db);
+      const result = await AssumptionService.update(assumption.id, { rationale: sampleRationale }, db);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -325,25 +324,7 @@ describe("AssumptionService", () => {
 
       const reloaded = await AssumptionService.get(assumption.id, db);
       expect(reloaded?.rationale).toEqual(sampleRationale);
-    });
-
-    it("bumps rationaleUpdatedAt", async () => {
-      const { user, decision } = await createDecisionWithProjectScenario(db);
-      const longAgo = new Date("2026-01-01T00:00:00Z");
-      const assumption = await createAssumption(db, decision.id, user.id, { rationale_updated_at: longAgo });
-
-      const result = await AssumptionService.updateRationale(assumption.id, sampleRationale, db);
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.rationaleUpdatedAt.getTime()).toBeGreaterThan(longAgo.getTime());
-      }
-    });
-
-    it("throws when the assumption does not exist", async () => {
-      await expect(
-        AssumptionService.updateRationale("00000000-0000-7000-8000-000000000000", sampleRationale, db)
-      ).rejects.toThrow("update failed");
+      expect(reloaded?.rationaleUpdatedAt.getTime()).toBeGreaterThan(longAgo.getTime());
     });
   });
 

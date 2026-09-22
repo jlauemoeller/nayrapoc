@@ -8,6 +8,7 @@ import { AssumptionCommentEditor } from "@/components/assumption-comment-editor"
 import { SessionUser } from "@/lib/models/user";
 import { canDeleteAssumptionComment } from "@/lib/policies/assumptionComment";
 import { canUpdateAssumption } from "@/lib/policies/assumption";
+import { useRouter } from "next/navigation";
 import {
   createAssumptionComment,
   deleteAssumptionComment,
@@ -26,23 +27,27 @@ type AssumptionCommentListProps = {
 export function AssumptionCommentList({ actor, assumption, initialComments }: AssumptionCommentListProps) {
   const editable = canUpdateAssumption(actor, assumption);
   const [comments, setComments] = useState(initialComments);
+  const router = useRouter();
 
   const handleCreate = async function (body: Block[]) {
     const result = await createAssumptionComment({ assumptionId: assumption.id, body });
     if (!result.success) return showErrorToast("Could not create comment");
     setComments((prev) => [...prev, result.data]);
+    router.refresh();
   };
 
   const handleDelete = async function (id: string) {
     const result = await deleteAssumptionComment(id);
     if (!result.success) return showErrorToast("Could not delete comment");
     setComments((prev) => prev.filter((c) => c.id != id));
+    router.refresh();
   };
 
   const handleResolutionChange = async function (id: string, state: boolean) {
     const result = await updateAssumptionCommentResolutionState(id, state);
     if (!result.success) return showErrorToast("Could not change comment resolution state");
     setComments((prev) => prev.map((c) => (c.id == id ? result.data : c)));
+    router.refresh();
   };
 
   return (
