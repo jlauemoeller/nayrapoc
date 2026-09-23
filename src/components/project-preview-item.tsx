@@ -11,7 +11,7 @@ type ProjectPreviewItemProps = {
 
 export function ProjectPreviewItem({ project, counts }: ProjectPreviewItemProps) {
   return (
-    <Item variant="outline" asChild>
+    <Item variant="outline" className="bg-card text-card-foreground" asChild>
       <Link href={`/projects/${project.id}`}>
         <ItemMedia variant="icon">
           <ProjectIcon />

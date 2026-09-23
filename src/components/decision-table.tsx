@@ -20,13 +20,13 @@ type DecisionTableProps = {
 export function DecisionTable({ decisions, page, hasNextPage, total }: DecisionTableProps) {
   return (
     <div className="flex flex-col items-end gap-4">
-      <div className="border rounded-lg w-full">
-        <Table className="w-full">
+      <div className="w-full overflow-hidden border rounded-lg bg-card">
+        <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-50">Decision</TableHead>
+            <TableRow className="bg-muted">
+              <TableHead className="w-50">Title</TableHead>
               <TableHead>Author</TableHead>
-              <TableHead>Review</TableHead>
+              <TableHead>Review Status</TableHead>
               <TableHead>State</TableHead>
             </TableRow>
           </TableHeader>

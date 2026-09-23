@@ -12,7 +12,7 @@ type AssumptionPreviewItemProps = {
 
 export function AssumptionPreviewItem({ assumption }: AssumptionPreviewItemProps) {
   return (
-    <Item variant="outline" asChild className="items-start">
+    <Item variant="outline" asChild className="items-start bg-card text-card-foreground">
       <Link href={`/assumptions/${assumption.id}`}>
         <ItemMedia variant="icon">
           <AssumptionIcon />

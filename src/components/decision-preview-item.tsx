@@ -17,7 +17,7 @@ export function DecisionPreviewItem({ decision }: DecisionPreviewItemProps) {
   } satisfies Intl.DateTimeFormatOptions;
 
   return (
-    <Item variant="outline" asChild>
+    <Item variant="outline" className="bg-card text-card-foreground" asChild>
       <Link href={`/decisions/${decision.id}`}>
         <ItemMedia variant="icon">
           <DecisionIcon />

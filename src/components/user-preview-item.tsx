@@ -24,7 +24,7 @@ function formatRole(role: UserRole) {
 export function UserPreviewItem({ user }: UserPreviewItemProps) {
   return (
     <Item variant="outline" asChild>
-      <Link href={`/users/${user.id}`}>
+      <Link href={`/users/${user.id}`} className="bg-card text-card-foreground">
         <ItemMedia variant="icon">
           <Avatar className="size-10">
             <AvatarInitials user={user} />

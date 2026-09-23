@@ -8,7 +8,7 @@ type AvatarInitialsProps = {
 export function AvatarInitials({ user }: AvatarInitialsProps) {
   const initials = initial(user.firstName).toUpperCase() + initial(user.lastName).toUpperCase();
 
-  return <AvatarFallback className="bg-primary text-secondary font-bold">{initials}</AvatarFallback>;
+  return <AvatarFallback className="bg-primary text-primary-foreground font-bold">{initials}</AvatarFallback>;
 }
 
 function initial(name: string | undefined): string {

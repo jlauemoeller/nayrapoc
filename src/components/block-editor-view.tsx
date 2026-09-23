@@ -55,7 +55,7 @@ export default function BlockEditorView({ initialContent, onValueChange, classNa
   }, editor);
 
   return (
-    <div className={cn("pt-2 pb-2 border rounded-lg min-w-100", className)}>
+    <div className={cn("pt-2 pb-2 border rounded-lg min-w-100 bg-card", className)}>
       <BlockNoteView editor={editor} {...rest} />
     </div>
   );
