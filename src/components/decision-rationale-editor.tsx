@@ -23,5 +23,7 @@ export function DecisionRationaleEditor({ decision, ...props }: DecisionRational
     });
   }, 300);
 
-  return <BlockEditor onValueChange={debouncedSave} initialContent={decision.rationale} {...props} />;
+  return (
+    <BlockEditor onValueChange={debouncedSave} initialContent={decision.rationale} className="min-h-50" {...props} />
+  );
 }

@@ -73,8 +73,6 @@ function content(
   if (comments.length > 0) {
     const items = comments.map((c) => item(actor, handleDelete, handleResolutionChange, assumption, c));
     return <div className="flex flex-col">{items}</div>;
-  } else {
-    return <div>No comments yet</div>;
   }
 }
 

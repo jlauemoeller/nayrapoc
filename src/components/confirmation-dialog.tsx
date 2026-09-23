@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonSize } from "@/components/ui/button";
 import { ReactNode } from "react";
 
 interface ConfirmationDialogProps {
@@ -22,6 +22,7 @@ interface ConfirmationDialogProps {
   content: ReactNode;
   actionLabel?: string;
   cancelLabel?: string;
+  buttonSize?: ButtonSize;
   onConfirm?: () => void;
 }
 
@@ -32,12 +33,13 @@ export function ConfirmationDialog({
   content,
   actionLabel,
   cancelLabel,
+  buttonSize,
   onConfirm
 }: ConfirmationDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">
+        <Button variant="destructive" size={buttonSize}>
           {triggerIcon} {triggerLabel}
         </Button>
       </AlertDialogTrigger>

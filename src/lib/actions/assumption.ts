@@ -1,6 +1,7 @@
 "use server";
 
 import type { Block } from "@blocknote/core";
+import { revalidatePath } from "next/cache";
 import {
   ActionResult,
   FieldError,
@@ -47,6 +48,7 @@ export async function createAssumption(
   }
 
   const result = await AssumptionService.create(validated.data);
+  if (result.isOk()) revalidateAssumption(result.value);
   return actionResult(result, assumptionFormSchema.keyof().options);
 }
 
@@ -70,6 +72,7 @@ export async function updateAssumption(
   }
 
   const result = await AssumptionService.update(assumptionId, validated.data);
+  if (result.isOk()) revalidateAssumption(result.value);
   return actionResult(result, assumptionUpdateSchema.keyof().options);
 }
 
@@ -90,6 +93,7 @@ export async function updateAssumptionRationale(
   }
 
   const result = await AssumptionService.update(assumptionId, { rationale: validated.data });
+  if (result.isOk()) revalidateAssumption(result.value);
   return actionResult(result, assumptionUpdateSchema.keyof().options);
 }
 
@@ -107,5 +111,12 @@ export async function deleteAssumption(assumptionId: string): Promise<ActionResu
     return actionErrorResult("Could not delete assumption");
   }
 
+  revalidateAssumption(existing);
+
   return { success: true, data: undefined };
+}
+
+function revalidateAssumption(assumption: Pick<Assumption, "id" | "decisionId">) {
+  revalidatePath(`/decisions/${assumption.decisionId}`);
+  revalidatePath(`/assumptions/${assumption.id}`);
 }

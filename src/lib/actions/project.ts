@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   ActionResult,
   FieldError,
@@ -43,6 +44,7 @@ export async function createProject(
   }
 
   const result = await ProjectService.create(validated.data);
+  if (result.isOk()) revalidateProjects();
   return actionResult(result, projectFormSchema.keyof().options);
 }
 
@@ -67,6 +69,7 @@ export async function updateProject(
   }
 
   const result = await ProjectService.update(projectId, validated.data);
+  if (result.isOk()) revalidateProjects();
   return actionResult(result, projectUpdateSchema.keyof().options);
 }
 
@@ -84,5 +87,12 @@ export async function deleteProject(projectId: string): Promise<ActionResult<voi
     return actionErrorResult("Could not delete project");
   }
 
+  revalidateProjects();
+
   return { success: true, data: undefined };
+}
+
+// Projects are listed in the sidebar of the authenticated layout, so every page shows them.
+function revalidateProjects() {
+  revalidatePath("/", "layout");
 }

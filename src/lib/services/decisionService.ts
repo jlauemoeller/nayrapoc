@@ -55,6 +55,10 @@ export class DecisionService {
     return toDecisionWithProjectAndCreatorIfAny(record);
   }
 
+  static async count(projectId: string, connection: DbConnection = db): Promise<number> {
+    return await DecisionRepository.count(projectId, connection);
+  }
+
   static async list(connection: DbConnection = db): Promise<Decision[]> {
     const records = await DecisionRepository.list(connection);
     return records.map(toDecision);
@@ -70,6 +74,24 @@ export class DecisionService {
     connection: DbConnection = db
   ): Promise<Decision<"with-creator">[]> {
     const records = await DecisionRepository.listWithCreatorForProject(projectId, connection);
+    return records.map(toDecisionWithCreator);
+  }
+
+  static async listNeedsReviewWithCreatorForProject(
+    projectId: string,
+    connection: DbConnection = db
+  ): Promise<Decision<"with-creator">[]> {
+    const records = await DecisionRepository.listNeedsReviewWithCreatorForProject(projectId, connection);
+    return records.map(toDecisionWithCreator);
+  }
+
+  static async paginateWithCreatorForProject(
+    projectId: string,
+    limit: number,
+    offset: number,
+    connection: DbConnection = db
+  ): Promise<Decision<"with-creator">[]> {
+    const records = await DecisionRepository.paginateWithCreatorForProject(projectId, limit, offset, connection);
     return records.map(toDecisionWithCreator);
   }
 

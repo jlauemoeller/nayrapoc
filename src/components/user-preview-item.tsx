@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Item, ItemActions, ItemMedia, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { User, UserRole } from "@/lib/models/user";
-import { UserIcon, DetailIcon } from "@/components/icons";
+import { DetailIcon } from "@/components/icons";
+import { AvatarInitials } from "@/components/avatar-initials";
+import { Avatar } from "@/components/ui/avatar";
 
 type UserPreviewItemProps = {
   user: User;
@@ -24,7 +26,9 @@ export function UserPreviewItem({ user }: UserPreviewItemProps) {
     <Item variant="outline" asChild>
       <Link href={`/users/${user.id}`}>
         <ItemMedia variant="icon">
-          <UserIcon />
+          <Avatar className="size-10">
+            <AvatarInitials user={user} />
+          </Avatar>
         </ItemMedia>
         <ItemContent>
           <ItemTitle>
@@ -33,7 +37,7 @@ export function UserPreviewItem({ user }: UserPreviewItemProps) {
           <ItemDescription>
             <span className="flex flex-col gap-2">
               <span>{user.email}</span>
-              <Badge>{formatRole(user.role)}</Badge>
+              <Badge variant={user.role === "owner" ? "default" : "outline"}>{formatRole(user.role)}</Badge>
             </span>
           </ItemDescription>
         </ItemContent>

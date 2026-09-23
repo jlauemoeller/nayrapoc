@@ -47,12 +47,12 @@ export function DecisionReviewByEditor({ editable, decision }: DecisionReviewByE
         <div className="flex flex-row gap-2 items-center">
           Review by <DatePicker value={decision.reviewBy} onValueChange={changeHandler} label="Change" />
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => {
               changeHandler(null);
             }}
           >
-            <ClearIcon />
+            Clear Deadline
           </Button>
         </div>
       )}

@@ -6,12 +6,14 @@ import { DeleteIcon } from "@/components/icons";
 import { deleteDecision } from "@/lib/actions/decision";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ButtonSize } from "@/components/ui/button";
 
 type DeleteDecisionDialogProps = {
   decision: Decision;
+  buttonSize: ButtonSize;
 };
 
-export function DeleteDecisionDialog({ decision }: DeleteDecisionDialogProps) {
+export function DeleteDecisionDialog({ decision, buttonSize }: DeleteDecisionDialogProps) {
   const router = useRouter();
   const handleDelete = async () => {
     const result = await deleteDecision(decision.id);
@@ -28,6 +30,7 @@ export function DeleteDecisionDialog({ decision }: DeleteDecisionDialogProps) {
       title="Delete Decision?"
       triggerIcon={<DeleteIcon />}
       triggerLabel="Delete"
+      buttonSize={buttonSize}
       onConfirm={handleDelete}
       content={
         <>

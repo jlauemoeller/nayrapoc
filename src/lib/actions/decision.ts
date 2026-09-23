@@ -1,6 +1,7 @@
 "use server";
 
 import type { Block } from "@blocknote/core";
+import { revalidatePath } from "next/cache";
 import {
   ActionResult,
   FieldError,
@@ -47,6 +48,7 @@ export async function createDecision(
   }
 
   const result = await DecisionService.create(validated.data);
+  if (result.isOk()) revalidateDecision(result.value);
   return actionResult(result, decisionFormSchema.keyof().options);
 }
 
@@ -73,6 +75,7 @@ export async function updateDecision(
   }
 
   const result = await DecisionService.update(decisionId, validated.data);
+  if (result.isOk()) revalidateDecision(result.value);
   return actionResult(result, decisionUpdateSchema.keyof().options);
 }
 
@@ -92,6 +95,7 @@ export async function updateDecisionRationale(
   if (!validated.success) return invalidInput();
 
   const result = await DecisionService.updateRationale(decisionId, validated.data);
+  if (result.isOk()) revalidateDecision(result.value);
   return actionResult(result, decisionUpdateSchema.keyof().options);
 }
 
@@ -109,5 +113,15 @@ export async function deleteDecision(decisionId: string): Promise<ActionResult<v
     return actionErrorResult("Could not delete decision");
   }
 
+  revalidateDecision(existing);
+
   return { success: true, data: undefined };
+}
+
+// Decisions are listed on their project's page, and assumption pages show the
+// decision title in their breadcrumbs.
+function revalidateDecision(decision: Pick<Decision, "id" | "projectId">) {
+  revalidatePath(`/projects/${decision.projectId}`);
+  revalidatePath(`/decisions/${decision.id}`);
+  revalidatePath("/assumptions/[assumption_id]", "page");
 }

@@ -3,6 +3,9 @@ import { canListUsers, canCreateUser } from "@/lib/policies/user";
 import { UserService } from "@/lib/services/userService";
 import { PageTitle } from "@/components/page-title";
 import { UserPreviewList } from "@/components/user-preview-list";
+import { NewUserDialog } from "@/components/new-user-dialog";
+import { Button } from "@/components/ui/button";
+import { AddIcon } from "@/components/icons";
 
 export default async function TeamPage() {
   const actor = await currentUser();
@@ -12,9 +15,18 @@ export default async function TeamPage() {
   const editable = canCreateUser(actor, actor.accountId);
 
   return (
-    <div className="container mx-auto py-4 flex flex-col gap-4">
-      <PageTitle title="Team" hint="Your team"></PageTitle>
-      <UserPreviewList accountId={actor.accountId} users={users} editable={editable} />
+    <div className="container mx-auto py-4 flex flex-col gap-8">
+      <PageTitle
+        title="Team"
+        actions={
+          editable ?
+            <NewUserDialog accountId={actor.accountId} />
+          : <Button disabled size="sm">
+              <AddIcon /> Add user
+            </Button>
+        }
+      ></PageTitle>
+      <UserPreviewList users={users} />
     </div>
   );
 }

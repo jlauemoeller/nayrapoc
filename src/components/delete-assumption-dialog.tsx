@@ -6,12 +6,14 @@ import { DeleteIcon } from "@/components/icons";
 import { deleteAssumption } from "@/lib/actions/assumption";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ButtonSize } from "@/components/ui/button";
 
 type DeleteAssumptionDialogProps = {
   assumption: Assumption;
+  buttonSize?: ButtonSize;
 };
 
-export function DeleteAssumptionDialog({ assumption }: DeleteAssumptionDialogProps) {
+export function DeleteAssumptionDialog({ assumption, buttonSize }: DeleteAssumptionDialogProps) {
   const router = useRouter();
   const handleDelete = async () => {
     const result = await deleteAssumption(assumption.id);
@@ -28,6 +30,7 @@ export function DeleteAssumptionDialog({ assumption }: DeleteAssumptionDialogPro
       title="Delete Assumption?"
       triggerIcon={<DeleteIcon />}
       triggerLabel="Delete"
+      buttonSize={buttonSize}
       onConfirm={handleDelete}
       content={
         <>

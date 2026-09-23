@@ -6,12 +6,14 @@ import { Project } from "@/lib/models/project";
 import { deleteProject } from "@/lib/actions/project";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ButtonSize } from "./ui/button";
 
 type DeleteProjectDialogProps = {
   project: Project;
+  buttonSize: ButtonSize;
 };
 
-export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
+export function DeleteProjectDialog({ project, buttonSize }: DeleteProjectDialogProps) {
   const router = useRouter();
   const handleDelete = async () => {
     const result = await deleteProject(project.id);
@@ -28,6 +30,7 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
       title="Delete Project?"
       triggerIcon={<DeleteIcon />}
       triggerLabel="Delete"
+      buttonSize={buttonSize}
       onConfirm={handleDelete}
       content={
         <>

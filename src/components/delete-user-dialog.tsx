@@ -6,12 +6,14 @@ import { User } from "@/lib/models/user";
 import { deleteUser } from "@/lib/actions/user";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ButtonSize } from "@/components/ui/button";
 
 type DeleteUserDialogProps = {
   user: User;
+  buttonSize?: ButtonSize;
 };
 
-export function DeleteUserDialog({ user }: DeleteUserDialogProps) {
+export function DeleteUserDialog({ user, buttonSize }: DeleteUserDialogProps) {
   const router = useRouter();
   const handleDelete = async () => {
     const result = await deleteUser(user.id);
@@ -28,6 +30,7 @@ export function DeleteUserDialog({ user }: DeleteUserDialogProps) {
       title="Delete User?"
       triggerIcon={<DeleteIcon />}
       triggerLabel="Delete"
+      buttonSize={buttonSize}
       onConfirm={handleDelete}
       content={
         <>

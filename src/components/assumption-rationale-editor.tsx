@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 type AssumptionRationaleEditorProps = {
   assumption: Assumption;
   editable: boolean;
+  className?: string;
 };
 
 export function AssumptionRationaleEditor({ assumption, ...props }: AssumptionRationaleEditorProps) {

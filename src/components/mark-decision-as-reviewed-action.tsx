@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation";
 type MarkDecisionAsReviewedActionProps = {
   editable: boolean;
   decision: Decision;
+  className?: string;
 };
 
-export function MarkDecisionAsReviewedAction({ editable, decision }: MarkDecisionAsReviewedActionProps) {
+export function MarkDecisionAsReviewedAction({ editable, decision, ...props }: MarkDecisionAsReviewedActionProps) {
   const router = useRouter();
 
   const changeHandler = () => {
@@ -31,7 +32,7 @@ export function MarkDecisionAsReviewedAction({ editable, decision }: MarkDecisio
   };
 
   return (
-    <Button onClick={changeHandler} disabled={!editable}>
+    <Button onClick={changeHandler} disabled={!editable} {...props}>
       Mark as reviewed
     </Button>
   );

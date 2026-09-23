@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { revalidatePath } from "next/cache";
 import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
 import { createDecision, updateDecision, updateDecisionRationale, deleteDecision } from "@/lib/actions/decision";
@@ -12,6 +13,9 @@ vi.mock("@/lib/authorization", async () => {
   return { ...actual, currentUser: vi.fn() };
 });
 
+// revalidatePath needs a Next.js request context, which tests don't have.
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 const { db } = setupTestDb();
 
 const sampleRationale = [{ id: "1", type: "paragraph", content: "Boring technology wins" }] as unknown as Block[];
@@ -20,6 +24,7 @@ const NONEXISTENT_ID = "00000000-0000-7000-8000-000000000000";
 
 beforeEach(() => {
   resetCurrentUser();
+  vi.mocked(revalidatePath).mockClear();
 });
 
 describe("decision actions", () => {
@@ -37,6 +42,16 @@ describe("decision actions", () => {
         expect(result.data.projectId).toBe(project.id);
         expect(result.data.creatorId).toBe(user.id);
       }
+    });
+
+    it("revalidates the project page so the new decision shows up", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await createDecision({ title: "Use Postgres", projectId: project.id });
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/projects/${project.id}`);
     });
 
     it("denies a member (insufficient role)", async () => {

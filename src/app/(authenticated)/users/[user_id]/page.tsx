@@ -27,19 +27,20 @@ export default async function UserPage({ params }: UserPageParams) {
   const breadcrumbs = [{ name: "Users", link: "/users" }];
 
   return (
-    <div className="container mx-auto pb-4 flex flex-col">
-      <div className="flex flex-col md:flex-row md:justify-between items-center mb-4">
+    <div className="container mx-auto pb-4 flex flex-col gap-8">
+      <div>
         <Breadcrumbs path={breadcrumbs} page="User" className="mb-6" />
-        <div className="flex flex-row items-center gap-4">
-          {canDeleteUser(actor, user) ?
-            <DeleteUserDialog user={user} />
-          : <Button variant="destructive" disabled>
-              <DeleteIcon /> Delete
-            </Button>
+        <PageTitle
+          title={`${user.firstName} ${user.lastName}`}
+          actions={
+            canDeleteUser(actor, user) ?
+              <DeleteUserDialog user={user} buttonSize="sm" />
+            : <Button variant="destructive" disabled size="sm">
+                <DeleteIcon /> Delete
+              </Button>
           }
-        </div>
+        ></PageTitle>
       </div>
-      <PageTitle title={`${user.firstName} ${user.lastName}`}></PageTitle>
       <div className="text-xs text-muted-foreground">
         Created <RelativeTimeCard className="text-xs text-muted-foreground" date={user.createdAt} />
       </div>

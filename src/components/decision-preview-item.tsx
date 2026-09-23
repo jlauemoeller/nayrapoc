@@ -3,6 +3,7 @@ import { Decision } from "@/lib/models/decision";
 import { DecisionIcon, DetailIcon } from "@/components/icons";
 import { Item, ItemActions, ItemMedia, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { RelativeTimeCard } from "@/components/ui/relative-time-card";
+import { DecisionStateBadge } from "./decision-state-badge";
 
 type DecisionPreviewItemProps = {
   decision: Decision<"with-creator">;
@@ -22,23 +23,27 @@ export function DecisionPreviewItem({ decision }: DecisionPreviewItemProps) {
           <DecisionIcon />
         </ItemMedia>
         <ItemContent>
-          <ItemTitle>{decision.title}</ItemTitle>
+          <ItemTitle>
+            {decision.title} <DecisionStateBadge decision={decision} />
+          </ItemTitle>
           <ItemDescription>
-            <span className="flex flex-row gap-x-2 flex-wrap">
-              <span className="whitespace-nowrap">
-                Created <RelativeTimeCard className="text-muted-foreground" date={decision.createdAt} /> by{" "}
-                {decision.creator.firstName} {decision.creator.lastName}
-              </span>
-              {decision.reviewedAt && (
+            <span className="flex flex-col gap-2">
+              <span className="flex flex-row gap-x-2 flex-wrap">
                 <span className="whitespace-nowrap">
-                  Last reviewed{" "}
-                  <RelativeTimeCard
-                    className="text-muted-foreground"
-                    date={decision.reviewedAt}
-                    triggerFormatOptions={options}
-                  />
+                  Created <RelativeTimeCard className="text-muted-foreground" date={decision.createdAt} /> by{" "}
+                  {decision.creator.firstName} {decision.creator.lastName}
                 </span>
-              )}
+                {decision.reviewedAt && (
+                  <span className="whitespace-nowrap">
+                    Last reviewed{" "}
+                    <RelativeTimeCard
+                      className="text-muted-foreground"
+                      date={decision.reviewedAt}
+                      triggerFormatOptions={options}
+                    />
+                  </span>
+                )}
+              </span>
               {decision.reviewBy && (
                 <span className="font-bold whitespace-nowrap">
                   Review by{" "}

@@ -3,7 +3,7 @@ import { DecisionRecord, NewDecisionRecord } from "@/lib/models/decision";
 import { Result } from "neverthrow";
 import { db } from "@/lib/db";
 import { decisions, projects, users } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc, isNotNull, count } from "drizzle-orm";
 import { guarded, notNull, RecordError } from "@/lib/repositories/repository";
 import {
   DecisionWithCreatorResult,
@@ -70,6 +70,17 @@ export class DecisionRepository {
     return decision;
   }
 
+  static async count(projectId: string, connection: DbConnection = db): Promise<number> {
+    const [row] = await connection
+      .select({
+        count: count()
+      })
+      .from(decisions)
+      .where(eq(decisions.project_id, projectId));
+
+    return row.count;
+  }
+
   static async list(connection: DbConnection = db): Promise<DecisionRecord[]> {
     return await connection.query.decisions.findMany();
   }
@@ -99,6 +110,40 @@ export class DecisionRepository {
       .innerJoin(users, eq(users.id, decisions.creator_id))
       .where(eq(decisions.project_id, projectId))
       .orderBy(asc(decisions.created_at));
+  }
+
+  static async listNeedsReviewWithCreatorForProject(
+    projectId: string,
+    connection: DbConnection = db
+  ): Promise<DecisionWithCreatorResult[]> {
+    return await connection
+      .select({
+        decision: decisions,
+        creator: users
+      })
+      .from(decisions)
+      .innerJoin(users, eq(users.id, decisions.creator_id))
+      .where(and(eq(decisions.project_id, projectId), isNotNull(decisions.review_by)))
+      .orderBy(asc(decisions.review_by));
+  }
+
+  static async paginateWithCreatorForProject(
+    projectId: string,
+    limit: number,
+    offset: number,
+    connection: DbConnection = db
+  ): Promise<DecisionWithCreatorResult[]> {
+    return await connection
+      .select({
+        decision: decisions,
+        creator: users
+      })
+      .from(decisions)
+      .innerJoin(users, eq(users.id, decisions.creator_id))
+      .where(eq(decisions.project_id, projectId))
+      .orderBy(asc(decisions.review_by))
+      .limit(limit)
+      .offset(offset);
   }
 
   static async create(

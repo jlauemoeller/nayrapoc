@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   actionErrorResult,
   ActionResult,
@@ -44,6 +45,7 @@ export async function createTenantUser(
   }
 
   const result = await UserService.createTenantUser(validated.data);
+  if (result.isOk()) revalidatePath("/users");
   return actionResult(result, tenantUserFormSchema.keyof().options);
 }
 
@@ -69,6 +71,8 @@ export async function updateUser(
   }
 
   const result = await UserService.update(userId, validated.data);
+  // User names appear as creator/resolver across all resource pages.
+  if (result.isOk()) revalidatePath("/", "layout");
   return actionResult(result, tenantUserUpdateSchema.keyof().options);
 }
 
@@ -85,6 +89,8 @@ export async function deleteUser(userId: string): Promise<ActionResult<void, Fie
   if (!success) {
     return actionErrorResult("Could not delete user");
   }
+
+  revalidatePath("/users");
 
   return { success: true, data: undefined };
 }

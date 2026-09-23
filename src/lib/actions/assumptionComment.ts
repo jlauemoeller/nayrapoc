@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import {
   ActionResult,
   FieldError,
@@ -63,6 +64,7 @@ export async function createAssumptionComment(
     }
   );
 
+  if (result.isOk()) revalidatePath(`/assumptions/${input.assumptionId}`);
   return actionResult(result, assumptionCommentFormSchema.keyof().options);
 }
 
@@ -92,6 +94,7 @@ export async function updateAssumptionComment(
   }
 
   const result = await AssumptionCommentService.update(assumptionCommentId, validated.data);
+  if (result.isOk()) revalidatePath(`/assumptions/${existing.assumptionId}`);
   return actionResult(result, assumptionCommentUpdateSchema.keyof().options);
 }
 
@@ -136,6 +139,7 @@ export async function updateAssumptionCommentResolutionState(
     }
   );
 
+  if (result.isOk()) revalidatePath(`/assumptions/${existing.assumptionId}`);
   return actionResult(result, assumptionCommentUpdateSchema.keyof().options);
 }
 
@@ -169,6 +173,8 @@ export async function deleteAssumptionComment(
   if (!success) {
     return actionErrorResult("Could not delete assumption");
   }
+
+  revalidatePath(`/assumptions/${existing.assumptionId}`);
 
   return { success: true, data: undefined };
 }

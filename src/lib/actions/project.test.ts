@@ -12,6 +12,9 @@ vi.mock("@/lib/authorization", async () => {
   return { ...actual, currentUser: vi.fn() };
 });
 
+// revalidatePath needs a Next.js request context, which tests don't have.
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 const { db } = setupTestDb();
 
 const sampleDescription = [{ id: "1", type: "paragraph", content: "Ship it" }] as unknown as Block[];

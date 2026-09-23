@@ -39,30 +39,39 @@ export default async function AssumptionPage({ params }: AssumptionPageParams) {
   ];
 
   return (
-    <div className="container mx-auto pb-4 flex flex-col">
-      <div className="flex flex-col md:flex-row md:justify-between items-center">
-        <Breadcrumbs path={breadcrumbs} page="Assumption" />
-        {canDeleteAssumption(actor, assumption) ?
-          <DeleteAssumptionDialog assumption={assumption} />
-        : <Button variant="destructive" disabled>
-            <DeleteIcon /> Delete
-          </Button>
-        }
+    <div className="container mx-auto pb-4 flex flex-col gap-8">
+      <div>
+        <Breadcrumbs path={breadcrumbs} page="Assumption" className="mb-6" />
+        <PageTitle
+          title={<AssumptionTitleEditor assumption={assumption} editable={editable} />}
+          actions={
+            canDeleteAssumption(actor, assumption) ?
+              <DeleteAssumptionDialog assumption={assumption} buttonSize="sm" />
+            : <Button variant="destructive" size="sm" disabled>
+                <DeleteIcon /> Delete
+              </Button>
+          }
+        ></PageTitle>
+        <div className="text-xs text-muted-foreground">
+          <UserActionTagline action="Created" date={assumption.createdAt} user={assumption.creator} />
+        </div>
       </div>
-      <PageTitle title={<AssumptionTitleEditor assumption={assumption} editable={editable} />}></PageTitle>
-      <div className="text-xs text-muted-foreground">
-        <UserActionTagline action="Created" date={assumption.createdAt} user={assumption.creator} />
-      </div>
-      <div className="flex flex-col gap-4 mt-6 mb-2">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-row gap-4 items-baseline">
           <h3>Rationale</h3>
           {editable && <span className="text-muted-foreground text-xs">(Click and type to edit)</span>}
         </div>
-        <AssumptionRationaleEditor assumption={assumption} editable={editable} />
+        <AssumptionRationaleEditor assumption={assumption} editable={editable} className="min-h-50" />
         <AssumptionRationaleAIEvaluation assumption={assumption} />
       </div>
-      <h3 className="mb-4">Discussion</h3>
-      <AssumptionCommentList actor={actor} assumption={assumption} initialComments={comments} />
+      <div>
+        <h3>Discussion</h3>
+        <p className="mb-6">
+          Help validate the assumption by sharing your thoughts and concerns. Mark your comment as resolved when you
+          believe it has been addressed or is no longer relevant.
+        </p>
+        <AssumptionCommentList actor={actor} assumption={assumption} initialComments={comments} />
+      </div>
     </div>
   );
 }
