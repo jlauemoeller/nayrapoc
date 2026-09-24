@@ -3,6 +3,7 @@ import { cache } from "react";
 import { getAuthOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 /**
  * Assert that a policy is true. Example usage:
@@ -17,8 +18,20 @@ import { redirect } from "next/navigation";
  * Redirects to "/login" if policy denies access
  */
 
+/**
+ * The current session, or null if signed out. Prefer currentUser() in
+ * authenticated pages; use this where a missing session isn't an error.
+ */
+export const currentSession = cache(async () => {
+  // Opt into request-time rendering before touching auth config: otherwise
+  // `next build` tries to prerender pages and getAuthOptions() throws on env
+  // vars that only exist at runtime.
+  await connection();
+  return getServerSession(getAuthOptions());
+});
+
 export const currentUser = cache(async (): Promise<SessionUser> => {
-  const session = await getServerSession(getAuthOptions());
+  const session = await currentSession();
   if (!session?.user) redirect("/login");
   return session.user;
 });

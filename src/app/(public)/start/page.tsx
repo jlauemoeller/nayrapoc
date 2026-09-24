@@ -1,9 +1,8 @@
-import { getAuthOptions } from "@/lib/auth/options";
-import { getServerSession } from "next-auth";
+import { currentSession } from "@/lib/authorization";
 import { redirect } from "next/navigation";
 
 export default async function StartPage() {
-  const session = await getServerSession(getAuthOptions());
+  const session = await currentSession();
 
   if (session?.user && session?.user.accountId) {
     redirect("/overview");
