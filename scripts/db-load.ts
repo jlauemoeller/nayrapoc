@@ -3,7 +3,15 @@ import { resolve } from "node:path";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@lib/db";
 import { transaction } from "@lib/db/connection";
-import { users, accounts, projects, decisions, assumptions, verificationTokens } from "@lib/db/schema";
+import {
+  users,
+  accounts,
+  projects,
+  decisions,
+  assumptions,
+  assumptionComments,
+  verificationTokens
+} from "@lib/db/schema";
 import { reviveRow, DEFAULT_DUMP_PATH, type Dump } from "./db-portable";
 
 // Seeds the *current* database from a dump produced by db-dump.ts. Intended to
@@ -37,13 +45,15 @@ async function main() {
   const projectRows = dump.projects.map((r) => reviveRow(projects, r));
   const decisionRows = dump.decisions.map((r) => reviveRow(decisions, r));
   const assumptionRows = dump.assumptions.map((r) => reviveRow(assumptions, r));
+  // `?? []` tolerates dumps taken before assumption_comments existed.
+  const commentRows = (dump.assumption_comments ?? []).map((r) => reviveRow(assumptionComments, r));
   const tokenRows = dump.verification_tokens.map((r) => reviveRow(verificationTokens, r));
 
   await transaction(async (tx) => {
     // Wipe first so the load is idempotent. CASCADE covers any FK; the explicit
     // list keeps it readable.
     await tx.execute(
-      sql`TRUNCATE users, accounts, projects, decisions, assumptions, verification_tokens RESTART IDENTITY CASCADE`
+      sql`TRUNCATE users, accounts, projects, decisions, assumptions, assumption_comments, verification_tokens RESTART IDENTITY CASCADE`
     );
 
     // users <-> accounts is a circular FK (users.account_id -> accounts.id,
@@ -65,10 +75,11 @@ async function main() {
     if (projectRows.length) await tx.insert(projects).values(projectRows);
     if (decisionRows.length) await tx.insert(decisions).values(decisionRows);
     if (assumptionRows.length) await tx.insert(assumptions).values(assumptionRows);
+    if (commentRows.length) await tx.insert(assumptionComments).values(commentRows);
     if (tokenRows.length) await tx.insert(verificationTokens).values(tokenRows);
   });
 
-  const counts = [userRows, accountRows, projectRows, decisionRows, assumptionRows, tokenRows];
+  const counts = [userRows, accountRows, projectRows, decisionRows, assumptionRows, commentRows, tokenRows];
   const total = counts.reduce((sum, rows) => sum + rows.length, 0);
   console.log(`Loaded ${total} row(s) from ${inPath}.`);
 }

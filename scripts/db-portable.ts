@@ -1,6 +1,14 @@
 import { getTableColumns } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { users, accounts, verificationTokens, projects, decisions, assumptions } from "@lib/db/schema";
+import {
+  users,
+  accounts,
+  verificationTokens,
+  projects,
+  decisions,
+  assumptions,
+  assumptionComments
+} from "@lib/db/schema";
 
 // Shared between db-dump.ts (extract) and db-load.ts (seed).
 //
@@ -24,7 +32,8 @@ export const dumpTables = {
   verification_tokens: verificationTokens,
   projects,
   decisions,
-  assumptions
+  assumptions,
+  assumption_comments: assumptionComments
 } as const;
 
 export type DumpTableName = keyof typeof dumpTables;
