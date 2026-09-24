@@ -24,7 +24,7 @@ export function AssumptionCommentEditor({ assumptionComment, onSubmit, ...props 
   };
 
   return (
-    <div className="flex flex-col gap-4 h-64">
+    <div className="flex flex-col gap-4 min-h-64">
       <BlockEditor
         key={editorKey}
         initialContent={assumptionComment?.body}
