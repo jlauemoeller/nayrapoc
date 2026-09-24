@@ -19,7 +19,6 @@ export default async function ProjectsPage() {
     <div className="container mx-auto py-4 flex flex-col gap-4">
       <PageTitle
         title="Projects"
-        hint="Know your future by understanding your past"
         actions={
           editable ?
             <NewProjectDialog accountId={actor.accountId} />
