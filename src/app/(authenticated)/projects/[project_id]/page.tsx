@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { DecisionTable } from "@/components/decision-table";
 import { NewDecisionDialog } from "@/components/new-decision-dialog";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
+import z from "zod";
 
 type ProjectPageParams = {
   params: Promise<{ project_id: string }>;
@@ -22,6 +23,8 @@ type ProjectPageParams = {
 };
 
 const DECISIONS_PER_PAGE = 10;
+
+const pageSchema = z.coerce.number().int().min(1).catch(1);
 
 export default async function ProjectPage({ params, searchParams }: ProjectPageParams) {
   const { project_id } = await params;
@@ -41,7 +44,7 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
   const decisionsToReview = await DecisionService.listNeedsReviewWithCreatorForProject(project.id);
   const totalDecisions = await DecisionService.count(project.id);
 
-  const pageNumber = Math.max(1, parseInt(page ?? "1"));
+  const pageNumber = pageSchema.parse(page);
   const decisionsPlusOne = await DecisionService.paginateWithCreatorForProject(
     project.id,
     DECISIONS_PER_PAGE + 1,
