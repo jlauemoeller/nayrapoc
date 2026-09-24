@@ -30,6 +30,9 @@ const eslintConfig = defineConfig([
           destructuredArrayIgnorePattern: "^_",
         },
       ],
+      // Quotes/apostrophes in JSX text are harmless (React escapes text content); only flag
+      // `>` and `}`, which usually indicate a malformed JSX expression.
+      "react/no-unescaped-entities": ["error", { forbid: [">", "}"] }],
     },
   },
   {
