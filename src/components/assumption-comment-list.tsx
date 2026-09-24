@@ -6,7 +6,7 @@ import { type Assumption } from "@/lib/models/assumption";
 import { AssumptionCommentView } from "@/components/assumption-comment-view";
 import { AssumptionCommentEditor } from "@/components/assumption-comment-editor";
 import { SessionUser } from "@/lib/models/user";
-import { canDeleteAssumptionComment } from "@/lib/policies/assumptionComment";
+import { canDeleteAssumptionComment, canUpdateAssumptionComment } from "@/lib/policies/assumptionComment";
 import { canUpdateAssumption } from "@/lib/policies/assumption";
 import { useRouter } from "next/navigation";
 import {
@@ -84,11 +84,13 @@ function item(
   comment: AssumptionCommentWithPreloads
 ) {
   const canDelete = canDeleteAssumptionComment(actor, assumption, comment);
+  const editable = canUpdateAssumptionComment(actor, assumption, comment);
 
   return (
     <div key={comment.id} className="flex flex-col">
       <AssumptionCommentView
         deletable={canDelete}
+        editable={editable}
         onDelete={handleDelete}
         onResolutionChange={handleResolutionChange}
         comment={comment}

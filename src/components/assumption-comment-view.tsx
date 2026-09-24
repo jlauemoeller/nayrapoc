@@ -21,6 +21,7 @@ interface AssumptionCommentViewProps {
 
 export function AssumptionCommentView({
   deletable,
+  editable,
   onDelete,
   onResolutionChange,
   comment
@@ -48,21 +49,22 @@ export function AssumptionCommentView({
               triggerFormatOptions={options}
             />
           </div>
-          <div className="flex flex-row gap-4">
-            <div className="flex flex-row items-center space-x-2">
-              <Switch
-                id={`resolved-${comment.id}`}
-                defaultChecked={comment.resolvedAt !== undefined}
-                onCheckedChange={(state) => onResolutionChange(comment.id, state)}
-              />
-              <Label htmlFor={`resolved-${comment}`}>Resolved</Label>
-            </div>
+          <div className="flex flex-row gap-4 mr-2">
             <div className="flex flex-row gap-2">
               {deletable ?
                 <Button variant="destructive" onClick={() => onDelete(comment.id)}>
                   <DeleteIcon />
                 </Button>
               : ""}
+            </div>
+            <div className="flex flex-row items-center space-x-2">
+              <Switch
+                id={`resolved-${comment.id}`}
+                defaultChecked={comment.resolvedAt !== undefined}
+                disabled={!editable}
+                onCheckedChange={(state) => onResolutionChange(comment.id, state)}
+              />
+              <Label htmlFor={`resolved-${comment}`}>Resolved</Label>
             </div>
           </div>
         </div>
