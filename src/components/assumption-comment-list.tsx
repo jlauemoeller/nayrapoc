@@ -54,7 +54,7 @@ export function AssumptionCommentList({ actor, assumption, initialComments }: As
     <div className="flex flex-col">
       {content(actor, handleDelete, handleResolutionChange, assumption, comments)}
       {editable ?
-        <div className="border rounded-lg p-4 bg-input">
+        <div className="border rounded-lg p-4 bg-muted">
           <h3 className="mb-2">Leave a Comment</h3>
           <AssumptionCommentEditor onSubmit={handleCreate} className="h-full bg-white" />
         </div>
