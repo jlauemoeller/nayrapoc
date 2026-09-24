@@ -141,7 +141,7 @@ export class DecisionRepository {
       .from(decisions)
       .innerJoin(users, eq(users.id, decisions.creator_id))
       .where(eq(decisions.project_id, projectId))
-      .orderBy(asc(decisions.review_by))
+      .orderBy(asc(decisions.review_by), asc(decisions.created_at), asc(decisions.id))
       .limit(limit)
       .offset(offset);
   }
