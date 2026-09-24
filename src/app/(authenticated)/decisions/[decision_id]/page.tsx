@@ -12,7 +12,6 @@ import { AddIcon, DecisionIcon, DeleteIcon } from "@/components/icons";
 import { MarkDecisionAsReviewedAction } from "@/components/mark-decision-as-reviewed-action";
 import { PageTitle } from "@/components/page-title";
 import { RelativeTimeCard } from "@/components/ui/relative-time-card";
-import { canCreateAssumption } from "@/lib/policies/assumption";
 import { canViewDecision, canUpdateDecision, canDeleteDecision } from "@/lib/policies/decision";
 import { currentUser, assertAuthorized } from "@/lib/authorization";
 import { notFound } from "next/navigation";
