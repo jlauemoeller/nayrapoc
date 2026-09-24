@@ -5,6 +5,8 @@ import "@blocknote/shadcn/style.css";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/shadcn";
 import { requestUpload } from "@/lib/actions/uploadFile";
+import { BlockNoteSchema, createCodeBlockSpec } from "@blocknote/core";
+import { codeBlockOptions, syntaxHighlighter } from "@blocknote/code-block";
 import { useCreateBlockNote, useEditorChange } from "@blocknote/react";
 import { cn } from "cn";
 
@@ -39,6 +41,12 @@ interface BlockEditorViewProps {
 
 export default function BlockEditorView({ initialContent, onValueChange, className, ...rest }: BlockEditorViewProps) {
   const editor = useCreateBlockNote({
+    extensions: [syntaxHighlighter],
+    schema: BlockNoteSchema.create().extend({
+      blockSpecs: {
+        codeBlock: createCodeBlockSpec(codeBlockOptions)
+      }
+    }),
     // BlockNote rejects an empty array; pass undefined for a fresh document.
     initialContent: initialContent?.length ? initialContent : undefined,
     uploadFile
