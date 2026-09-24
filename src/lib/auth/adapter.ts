@@ -64,7 +64,7 @@ export function createAdapter(): Adapter {
         return toAdapterUser(result.value);
       }
 
-      throw new Error(`Failed to update user: ${result.error}`);
+      throw new Error(`Failed to update user: ${result.error.field} ${result.error.message}`);
     },
 
     async createVerificationToken(data: VerificationToken): Promise<VerificationToken> {

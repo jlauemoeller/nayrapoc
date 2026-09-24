@@ -14,7 +14,7 @@ export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
     if (!_db) {
       const connectionString = appConfig.db.url;
       if (!connectionString) {
-        throw new Error(`DATABASE_URL is not set in environment variables, ${appConfig}`);
+        throw new Error("DATABASE_URL is not set in environment variables");
       }
       const client = postgres(connectionString);
       _db = drizzle(client, { schema /*, logger: true */ });

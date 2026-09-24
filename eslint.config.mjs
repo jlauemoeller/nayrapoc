@@ -20,7 +20,20 @@ const eslintConfig = defineConfig([
     // Treat a leading underscore as "intentionally unused" for vars, args, caught errors,
     // and destructured-array holes -- the conventional escape hatch when a binding can't be omitted.
     files: ["src/**/*.{ts,tsx}"],
+    // Type-aware linting: lets rules consult the TS type checker (slower, but catches real bugs).
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
+      // Only primitives in template literals -- catches `${someObject}` rendering "[object Object]".
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        // Exhaustive-switch `default: throw new Error(`Unexpected ${x}`)` guards see `x: never`.
+        { allowNever: true },
+      ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {

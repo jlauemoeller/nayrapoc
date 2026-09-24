@@ -14,6 +14,7 @@ type AssumptionCommentWithPreloads = AssumptionComment<"with-creator-and-resolve
 
 interface AssumptionCommentViewProps {
   deletable: boolean;
+  editable: boolean;
   onDelete: (id: string) => void;
   onResolutionChange: (id: string, state: boolean) => void;
   comment: AssumptionCommentWithPreloads;
@@ -64,7 +65,7 @@ export function AssumptionCommentView({
                 disabled={!editable}
                 onCheckedChange={(state) => onResolutionChange(comment.id, state)}
               />
-              <Label htmlFor={`resolved-${comment}`}>Resolved</Label>
+              <Label htmlFor={`resolved-${comment.id}`}>Resolved</Label>
             </div>
           </div>
         </div>

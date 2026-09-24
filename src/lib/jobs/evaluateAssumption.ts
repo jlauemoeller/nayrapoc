@@ -25,7 +25,7 @@ export async function evaluateAssumption(
     );
 
     if (result.isErr()) {
-      console.error(`Unable to save evaluation result for assumption ${assumptionId}: ${result.error}`);
+      console.error(`Unable to save evaluation result for assumption ${assumptionId}:`, result.error);
     }
   }
 }
