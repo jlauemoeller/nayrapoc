@@ -4,8 +4,17 @@ import { AssumptionCommentService } from "@lib/services/assumptionCommentService
 import { setupTestDb } from "@lib/testing/dbTest";
 import { createAssumption, createAssumptionComment } from "@lib/testing/factories";
 import { createDecisionWithAssumptionAndCommentsScenario } from "@lib/testing/scenarios";
+import { evaluationJobsFor } from "@lib/testing/jobs";
+import { AssumptionService } from "@lib/services/assumptionService";
 
 const { db } = setupTestDb();
+
+// Any change to an assumption's comments can change how well its rationale holds up.
+async function expectEvaluationRequested(assumptionId: string) {
+  const assumption = await AssumptionService.get(assumptionId, db);
+  expect(assumption?.rationaleAiRequestedAt).toBeInstanceOf(Date);
+  expect(await evaluationJobsFor(assumptionId)).toHaveLength(1);
+}
 
 const sampleBody = [{ type: "paragraph", content: "Looks reasonable" }] as unknown as Block[];
 
@@ -129,6 +138,14 @@ describe("AssumptionCommentService", () => {
   });
 
   describe("create", () => {
+    it("requests an AI evaluation of the assumption", async () => {
+      const { user, assumption } = await createDecisionWithAssumptionAndCommentsScenario(db);
+
+      await AssumptionCommentService.create({ body: sampleBody, assumptionId: assumption.id, creatorId: user.id }, db);
+
+      await expectEvaluationRequested(assumption.id);
+    });
+
     it("returns Ok(comment) with camelCase domain fields", async () => {
       const { user, assumption } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
@@ -205,6 +222,14 @@ describe("AssumptionCommentService", () => {
   });
 
   describe("update", () => {
+    it("requests an AI evaluation of the assumption", async () => {
+      const { assumption, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
+
+      await AssumptionCommentService.update(unresolvedComment.id, { body: sampleBody }, db);
+
+      await expectEvaluationRequested(assumption.id);
+    });
+
     it("persists the body and round-trips it unchanged", async () => {
       const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 
@@ -307,6 +332,14 @@ describe("AssumptionCommentService", () => {
   });
 
   describe("delete", () => {
+    it("requests an AI evaluation of the assumption", async () => {
+      const { assumption, unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
+
+      await AssumptionCommentService.delete(unresolvedComment.id, db);
+
+      await expectEvaluationRequested(assumption.id);
+    });
+
     it("returns true when the comment exists", async () => {
       const { unresolvedComment } = await createDecisionWithAssumptionAndCommentsScenario(db);
 

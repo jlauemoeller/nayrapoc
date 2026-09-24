@@ -138,6 +138,39 @@ describe("DecisionService", () => {
     });
   });
 
+  describe("listNeedsReviewWithCreatorForProject", () => {
+    it("returns creator-joined domain decisions that have a review date", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const reviewBy = new Date("2026-02-01");
+      const due = await createDecision(db, project.id, user.id, { review_by: reviewBy });
+      await createDecision(db, project.id, user.id);
+
+      const result = await DecisionService.listNeedsReviewWithCreatorForProject(project.id, db);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(due.id);
+      expect(result[0].reviewBy).toEqual(reviewBy);
+      expect(result[0].creator.firstName).toBe(user.first_name);
+    });
+  });
+
+  describe("paginateWithCreatorForProject", () => {
+    it("returns the requested page as creator-joined domain decisions", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      await createDecision(db, project.id, user.id, { review_by: new Date("2026-02-01") });
+      const second = await createDecision(db, project.id, user.id, { review_by: new Date("2026-03-01") });
+      await createDecision(db, project.id, user.id, { review_by: new Date("2026-04-01") });
+
+      const result = await DecisionService.paginateWithCreatorForProject(project.id, 1, 1, db);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(second.id);
+      expect(result[0].creator.id).toBe(user.id);
+    });
+  });
+
   describe("create", () => {
     it("returns Ok(decision) with camelCase domain fields", async () => {
       const { user, account } = await createUserWithAccountScenario(db);

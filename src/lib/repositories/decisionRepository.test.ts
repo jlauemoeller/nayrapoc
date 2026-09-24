@@ -4,6 +4,7 @@ import { DecisionRepository } from "@lib/repositories/decisionRepository";
 import { setupTestDb } from "@lib/testing/dbTest";
 import { createDecision, createProject } from "@lib/testing/factories";
 import { createUserWithAccountScenario } from "../testing/scenarios";
+import { generateId } from "@lib/db/uuid";
 
 const { db } = setupTestDb();
 
@@ -82,6 +83,97 @@ describe("DecisionRepository", () => {
       const project = await createProject(db, account.id, user.id);
 
       const result = await DecisionRepository.listWithCreatorForProject(project.id, db);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("listNeedsReviewWithCreatorForProject", () => {
+    it("returns only decisions with a review date, soonest first", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const later = await createDecision(db, project.id, user.id, { review_by: new Date("2026-03-01") });
+      const sooner = await createDecision(db, project.id, user.id, { review_by: new Date("2026-02-01") });
+      await createDecision(db, project.id, user.id, { review_by: null });
+
+      const result = await DecisionRepository.listNeedsReviewWithCreatorForProject(project.id, db);
+
+      expect(result.map((r) => r.decision.id)).toEqual([sooner.id, later.id]);
+      expect(result[0].creator.id).toBe(user.id);
+    });
+
+    it("is scoped to the given project", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const otherProject = await createProject(db, account.id, user.id);
+      await createDecision(db, otherProject.id, user.id, { review_by: new Date("2026-02-01") });
+
+      const result = await DecisionRepository.listNeedsReviewWithCreatorForProject(project.id, db);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("paginateWithCreatorForProject", () => {
+    it("returns decisions with their creator, scoped to the given project", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const otherProject = await createProject(db, account.id, user.id);
+      const mine = await createDecision(db, project.id, user.id);
+      await createDecision(db, otherProject.id, user.id);
+
+      const result = await DecisionRepository.paginateWithCreatorForProject(project.id, 10, 0, db);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].decision.id).toBe(mine.id);
+      expect(result[0].creator.id).toBe(user.id);
+    });
+
+    it("orders by review date, then creation time, with undated decisions last", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const undatedNewer = await createDecision(db, project.id, user.id, { created_at: new Date("2026-01-02") });
+      const undatedOlder = await createDecision(db, project.id, user.id, { created_at: new Date("2026-01-01") });
+      const reviewLater = await createDecision(db, project.id, user.id, { review_by: new Date("2026-03-01") });
+      const reviewSooner = await createDecision(db, project.id, user.id, { review_by: new Date("2026-02-01") });
+
+      const result = await DecisionRepository.paginateWithCreatorForProject(project.id, 10, 0, db);
+
+      expect(result.map((r) => r.decision.id)).toEqual([
+        reviewSooner.id,
+        reviewLater.id,
+        undatedOlder.id,
+        undatedNewer.id
+      ]);
+    });
+
+    // Every row lands on exactly one page. Identical timestamps force the id tiebreaker;
+    // without a total order, Postgres may return ties in a different order per query.
+    it("pages through every decision exactly once, even when sort keys tie", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const sameTime = new Date("2026-01-01");
+      // Insert in reverse id order, so heap order and id order disagree.
+      const ids = Array.from({ length: 5 }, () => generateId());
+      for (const id of [...ids].reverse()) {
+        await createDecision(db, project.id, user.id, { id, created_at: sameTime });
+      }
+
+      const pages = [];
+      for (let offset = 0; offset < 6; offset += 2) {
+        pages.push(await DecisionRepository.paginateWithCreatorForProject(project.id, 2, offset, db));
+      }
+
+      expect(pages.map((page) => page.length)).toEqual([2, 2, 1]);
+      expect(pages.flat().map((r) => r.decision.id)).toEqual(ids);
+    });
+
+    it("returns an empty array when the offset is past the end", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      await createDecision(db, project.id, user.id);
+
+      const result = await DecisionRepository.paginateWithCreatorForProject(project.id, 10, 1, db);
+
       expect(result).toEqual([]);
     });
   });

@@ -1,9 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { revalidatePath } from "next/cache";
 import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
 import {
   createAssumptionComment,
   updateAssumptionComment,
+  updateAssumptionCommentResolutionState,
   deleteAssumptionComment
 } from "@/lib/actions/assumptionComment";
 import { AssumptionCommentService } from "@/lib/services/assumptionCommentService";
@@ -45,6 +47,7 @@ async function seedAssumption() {
 
 beforeEach(() => {
   resetCurrentUser();
+  vi.mocked(revalidatePath).mockClear();
 });
 
 describe("assumption comment actions", () => {
@@ -65,6 +68,15 @@ describe("assumption comment actions", () => {
         expect(result.data.creator.id).toBe(user.id);
         expect(result.data.resolver).toBeUndefined();
       }
+    });
+
+    it("revalidates the assumption page", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      asCurrentUser(actorFor(user, account));
+
+      await createAssumptionComment({ assumptionId: assumption.id, body: sampleBody });
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
     });
 
     it("denies a member (insufficient role)", async () => {
@@ -108,6 +120,16 @@ describe("assumption comment actions", () => {
       if (result.success) expect(result.data.body).toEqual(sampleBody);
     });
 
+    it("revalidates the assumption page", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const comment = await seedComment(db, assumption.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await updateAssumptionComment(comment.id, { body: sampleBody });
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
+    });
+
     it("denies a user in the same account who did not create the comment", async () => {
       const { user, account, assumption } = await seedAssumption();
       const comment = await seedComment(db, assumption.id, user.id);
@@ -140,6 +162,72 @@ describe("assumption comment actions", () => {
     });
   });
 
+  describe("updateAssumptionCommentResolutionState", () => {
+    it("resolves the comment with the actor as resolver", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const comment = await seedComment(db, assumption.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      const result = await updateAssumptionCommentResolutionState(comment.id, true);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.resolvedAt).toBeInstanceOf(Date);
+        expect(result.data.resolver?.id).toBe(user.id);
+      }
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
+    });
+
+    it("unresolves a resolved comment", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const comment = await seedComment(db, assumption.id, user.id, { resolver_id: user.id, resolved_at: new Date() });
+      asCurrentUser(actorFor(user, account));
+
+      const result = await updateAssumptionCommentResolutionState(comment.id, false);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.resolvedAt).toBeUndefined();
+        expect(result.data.resolver).toBeUndefined();
+      }
+    });
+
+    // Resolving twice (e.g. from two open tabs) must keep the original resolver and time.
+    it("leaves an already-resolved comment untouched", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const resolvedAt = new Date("2026-03-01T10:00:00Z");
+      const comment = await seedComment(db, assumption.id, user.id, { resolver_id: user.id, resolved_at: resolvedAt });
+      asCurrentUser(actorFor(user, account));
+
+      const result = await updateAssumptionCommentResolutionState(comment.id, true);
+
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.resolvedAt?.getTime()).toBe(resolvedAt.getTime());
+      expect(revalidatePath).not.toHaveBeenCalled();
+    });
+
+    it("denies a user in the same account who did not create the comment", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const comment = await seedComment(db, assumption.id, user.id);
+      const otherUser = await createUser(db, { account_id: account.id });
+      asCurrentUser(actorFor(otherUser, account));
+
+      const result = await updateAssumptionCommentResolutionState(comment.id, true);
+
+      expect(result).toEqual(NOT_AUTHORIZED);
+      expect((await AssumptionCommentService.get(comment.id, db))?.resolvedAt).toBeUndefined();
+    });
+
+    it("denies (not found) when the comment does not exist", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      asCurrentUser(actorFor(user, account));
+
+      const result = await updateAssumptionCommentResolutionState(NONEXISTENT_ID, true);
+
+      expect(result).toEqual(NOT_AUTHORIZED);
+    });
+  });
+
   describe("deleteAssumptionComment", () => {
     it("deletes the comment and returns success", async () => {
       const { user, account, assumption } = await seedAssumption();
@@ -150,6 +238,16 @@ describe("assumption comment actions", () => {
 
       expect(result).toEqual({ success: true, data: undefined });
       expect(await AssumptionCommentService.get(comment.id, db)).toBeUndefined();
+    });
+
+    it("revalidates the assumption page", async () => {
+      const { user, account, assumption } = await seedAssumption();
+      const comment = await seedComment(db, assumption.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await deleteAssumptionComment(comment.id);
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
     });
 
     it("denies a non-creator in the same account and leaves the row intact", async () => {

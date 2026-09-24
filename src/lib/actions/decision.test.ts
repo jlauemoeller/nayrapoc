@@ -93,6 +93,31 @@ describe("decision actions", () => {
       if (result.success) expect(result.data.title).toBe("New");
     });
 
+    // Assumption pages show the decision title in their breadcrumbs.
+    it("revalidates the project, decision and assumption pages", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const decision = await seedDecision(db, project.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await updateDecision(decision.id, { title: "New" });
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/projects/${project.id}`);
+      expect(revalidatePath).toHaveBeenCalledWith(`/decisions/${decision.id}`);
+      expect(revalidatePath).toHaveBeenCalledWith("/assumptions/[assumption_id]", "page");
+    });
+
+    it("does not revalidate when denied", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const decision = await seedDecision(db, project.id, user.id);
+      asCurrentUser(actorFor(user, account, { role: "member" }));
+
+      await updateDecision(decision.id, { title: "New" });
+
+      expect(revalidatePath).not.toHaveBeenCalled();
+    });
+
     it("denies an actor from another account", async () => {
       const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
@@ -134,6 +159,17 @@ describe("decision actions", () => {
       if (result.success) expect(result.data.rationale).toEqual(sampleRationale);
     });
 
+    it("revalidates the decision page", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const decision = await seedDecision(db, project.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await updateDecisionRationale(decision.id, sampleRationale);
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/decisions/${decision.id}`);
+    });
+
     it("denies an actor from another account", async () => {
       const { user, account } = await createUserWithAccountScenario(db);
       const project = await createProject(db, account.id, user.id);
@@ -161,6 +197,17 @@ describe("decision actions", () => {
 
       expect(result).toEqual({ success: true, data: undefined });
       expect(await DecisionService.get(decision.id, db)).toBeUndefined();
+    });
+
+    it("revalidates the project page so the decision disappears", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      const project = await createProject(db, account.id, user.id);
+      const decision = await seedDecision(db, project.id, user.id);
+      asCurrentUser(actorFor(user, account));
+
+      await deleteDecision(decision.id);
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/projects/${project.id}`);
     });
 
     it("denies an actor from another account and leaves the row intact", async () => {

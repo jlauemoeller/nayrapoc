@@ -4,6 +4,7 @@ import { AssumptionService } from "@lib/services/assumptionService";
 import { setupTestDb } from "@lib/testing/dbTest";
 import { createAssumption, createDecision } from "@lib/testing/factories";
 import { createDecisionWithProjectScenario } from "../testing/scenarios";
+import { evaluationJobsFor } from "@lib/testing/jobs";
 
 const { db } = setupTestDb();
 
@@ -224,6 +225,37 @@ describe("AssumptionService", () => {
       }
     });
 
+    it("requests an AI evaluation when created with a rationale", async () => {
+      const { user, decision } = await createDecisionWithProjectScenario(db);
+
+      const result = await AssumptionService.create(
+        { title: "Load stays flat", rationale: sampleRationale, decisionId: decision.id, creatorId: user.id },
+        db
+      );
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        const reloaded = await AssumptionService.get(result.value.id, db);
+        expect(reloaded?.rationaleAiRequestedAt).toBeInstanceOf(Date);
+        expect(await evaluationJobsFor(result.value.id)).toHaveLength(1);
+      }
+    });
+
+    it("does not request an AI evaluation without a rationale", async () => {
+      const { user, decision } = await createDecisionWithProjectScenario(db);
+
+      const result = await AssumptionService.create(
+        { title: "Load stays flat", decisionId: decision.id, creatorId: user.id },
+        db
+      );
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.rationaleAiRequestedAt).toBeUndefined();
+        expect(await evaluationJobsFor(result.value.id)).toEqual([]);
+      }
+    });
+
     // Missing FKs are "unexpected" — no handler is registered, so they throw rather than
     // returning a typed Err.
     it("throws when decision does not exist", async () => {
@@ -305,6 +337,30 @@ describe("AssumptionService", () => {
       const reloaded = await AssumptionService.get(assumption.id, db);
       expect(reloaded?.rationale).toEqual(sampleRationale);
       expect(reloaded?.rationaleUpdatedAt.getTime()).toBeGreaterThan(longAgo.getTime());
+    });
+
+    it("requests an AI evaluation when the rationale changes", async () => {
+      const { user, decision } = await createDecisionWithProjectScenario(db);
+      const assumption = await createAssumption(db, decision.id, user.id);
+
+      await AssumptionService.update(assumption.id, { rationale: sampleRationale }, db);
+
+      const reloaded = await AssumptionService.get(assumption.id, db);
+      expect(reloaded?.rationaleAiRequestedAt).toBeInstanceOf(Date);
+      expect(await evaluationJobsFor(assumption.id)).toHaveLength(1);
+    });
+
+    // The evaluation job itself writes back through `update` (without a rationale); if that
+    // requested another evaluation, the job would re-enqueue itself forever.
+    it("does not request an AI evaluation when the rationale is untouched", async () => {
+      const { user, decision } = await createDecisionWithProjectScenario(db);
+      const assumption = await createAssumption(db, decision.id, user.id);
+
+      await AssumptionService.update(assumption.id, { title: "New", rationaleAiRating: "addressed" }, db);
+
+      const reloaded = await AssumptionService.get(assumption.id, db);
+      expect(reloaded?.rationaleAiRequestedAt).toBeUndefined();
+      expect(await evaluationJobsFor(assumption.id)).toEqual([]);
     });
   });
 

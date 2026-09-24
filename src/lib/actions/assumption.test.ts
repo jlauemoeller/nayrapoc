@@ -1,4 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { revalidatePath } from "next/cache";
 import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
 import {
@@ -52,6 +53,7 @@ async function seedAccountWithAssumption() {
 
 beforeEach(() => {
   resetCurrentUser();
+  vi.mocked(revalidatePath).mockClear();
 });
 
 describe("assumption actions", () => {
@@ -69,6 +71,26 @@ describe("assumption actions", () => {
         expect(result.data.decisionId).toBe(decision.id);
         expect(result.data.creatorId).toBe(user.id);
       }
+    });
+
+    it("revalidates the decision page so the new assumption shows up", async () => {
+      const { user, account, decision } = await seedAccountWithDecision();
+      asCurrentUser(actorFor(user, account));
+
+      const result = await createAssumption({ title: "Load stays flat", decisionId: decision.id });
+
+      expect(result.success).toBe(true);
+      expect(revalidatePath).toHaveBeenCalledWith(`/decisions/${decision.id}`);
+      if (result.success) expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${result.data.id}`);
+    });
+
+    it("does not revalidate when denied", async () => {
+      const { user, account, decision } = await seedAccountWithDecision();
+      asCurrentUser(actorFor(user, account, { role: "member" }));
+
+      await createAssumption({ title: "Load stays flat", decisionId: decision.id });
+
+      expect(revalidatePath).not.toHaveBeenCalled();
     });
 
     it("normalizes the title", async () => {
@@ -135,6 +157,16 @@ describe("assumption actions", () => {
       }
     });
 
+    it("revalidates the decision and assumption pages", async () => {
+      const { user, account, assumption } = await seedAccountWithAssumption();
+      asCurrentUser(actorFor(user, account));
+
+      await updateAssumption(assumption.id, { title: "New" });
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/decisions/${assumption.decision_id}`);
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
+    });
+
     it("rejects a blank title as invalid input and leaves the row intact", async () => {
       const { user, account, assumption } = await seedAccountWithAssumption();
       asCurrentUser(actorFor(user, account));
@@ -186,6 +218,15 @@ describe("assumption actions", () => {
       if (result.success) expect(result.data.rationale).toEqual(sampleRationale);
     });
 
+    it("revalidates the assumption page", async () => {
+      const { user, account, assumption } = await seedAccountWithAssumption();
+      asCurrentUser(actorFor(user, account));
+
+      await updateAssumptionRationale(assumption.id, sampleRationale);
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/assumptions/${assumption.id}`);
+    });
+
     it("rejects a malformed document as invalid input", async () => {
       const { user, account, assumption } = await seedAccountWithAssumption();
       asCurrentUser(actorFor(user, account));
@@ -234,6 +275,15 @@ describe("assumption actions", () => {
 
       expect(result).toEqual({ success: true, data: undefined });
       expect(await AssumptionService.get(assumption.id, db)).toBeUndefined();
+    });
+
+    it("revalidates the decision page so the assumption disappears", async () => {
+      const { user, account, assumption } = await seedAccountWithAssumption();
+      asCurrentUser(actorFor(user, account));
+
+      await deleteAssumption(assumption.id);
+
+      expect(revalidatePath).toHaveBeenCalledWith(`/decisions/${assumption.decision_id}`);
     });
 
     it("denies a member and leaves the row intact", async () => {

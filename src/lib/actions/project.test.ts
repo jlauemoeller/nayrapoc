@@ -1,4 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { revalidatePath } from "next/cache";
 import { actorFor, asCurrentUser, resetCurrentUser } from "../testing/actions";
 import type { Block } from "@blocknote/core";
 import { createProject, updateProject, deleteProject } from "@/lib/actions/project";
@@ -34,6 +35,7 @@ async function seedAccountWithProject() {
 
 beforeEach(() => {
   resetCurrentUser();
+  vi.mocked(revalidatePath).mockClear();
 });
 
 describe("project actions", () => {
@@ -56,6 +58,16 @@ describe("project actions", () => {
         expect(result.data.accountId).toBe(account.id);
         expect(result.data.creatorId).toBe(user.id);
       }
+    });
+
+    // Projects are listed in the sidebar, which every authenticated page renders.
+    it("revalidates the whole app layout", async () => {
+      const { user, account } = await createUserWithAccountScenario(db);
+      asCurrentUser(actorFor(user, account));
+
+      await createProject({ name: "Apollo", accountId: account.id });
+
+      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     });
 
     it("normalizes the name", async () => {
@@ -114,6 +126,15 @@ describe("project actions", () => {
       }
     });
 
+    it("revalidates the whole app layout", async () => {
+      const { user, account, project } = await seedAccountWithProject();
+      asCurrentUser(actorFor(user, account));
+
+      await updateProject(project.id, { name: "New" });
+
+      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+    });
+
     it("rejects a blank name as invalid input and leaves the row intact", async () => {
       const { user, account, project } = await seedAccountWithProject();
       asCurrentUser(actorFor(user, account));
@@ -163,6 +184,15 @@ describe("project actions", () => {
 
       expect(result).toEqual({ success: true, data: undefined });
       expect(await ProjectService.get(project.id, db)).toBeUndefined();
+    });
+
+    it("revalidates the whole app layout", async () => {
+      const { user, account, project } = await seedAccountWithProject();
+      asCurrentUser(actorFor(user, account));
+
+      await deleteProject(project.id);
+
+      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
     });
 
     it("denies a member and leaves the row intact", async () => {

@@ -198,6 +198,20 @@ describe("evaluationStatus", () => {
     expect(evaluationStatus(a)).toBe("pending"); // == "pending").toBe(true);
   });
 
+  // Editing the rationale both outdates the evaluation and requests a new one; the UI
+  // should show that a fresh evaluation is on its way, not that the old one is stale.
+  it("returns 'pending' rather than 'outdated' when a newer evaluation has been requested", () => {
+    const a = toAssumption(
+      buildAssumptionRecord({
+        rationale_ai_evaluated_at: new Date("2026-09-15T12:00:00"),
+        rationale_updated_at: new Date("2026-09-15T12:00:01"),
+        rationale_ai_requested_at: new Date("2026-09-15T12:00:01")
+      })
+    );
+
+    expect(evaluationStatus(a)).toBe("pending");
+  });
+
   it("returns 'current' if rationale evaluation timestamp is equal to rationale update timestamp", () => {
     const a = toAssumption(
       buildAssumptionRecord({

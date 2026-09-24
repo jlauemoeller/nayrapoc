@@ -2,9 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PgBoss } from "pg-boss";
 import { getBoss, stopBoss } from "./boss";
 import { QUEUES, queueDefinitions } from "./queues";
+import { setupTestDb } from "@lib/testing/dbTest";
 
-// Integration test against the `pgboss` schema in nayra_test. It doesn't touch
-// the app tables, so it doesn't need the advisory lock from setupTestDb().
+// Integration test against the `pgboss` schema in nayra_test. It doesn't touch the
+// app tables, but it clears the evaluation queue, which service tests assert on —
+// so it takes the shared advisory lock to avoid racing them.
+setupTestDb();
+
 describe("pg-boss bootstrap", () => {
   let boss: PgBoss;
 
