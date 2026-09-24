@@ -2,25 +2,25 @@ import { config } from "dotenv";
 import path from "path";
 
 /**
- * Load .env files in priority order (last wins).
+ * Load .env files for non-Next.js consumers — CLI scripts, migrations, test
+ * runners — mirroring Next.js's precedence (highest first):
  *
- * Next.js handles this automatically for the web app; this function is a
- * no-op in that context (dotenv won't override already-set vars).  It
- * exists so that non-Next.js consumers — CLI scripts, migrations, test
- * runners — get the same environment loading behaviour.
+ *   1. process.env             — explicitly set vars always win
+ *   2. .env.[NODE_ENV].local   — local overrides, NOT committed
+ *   3. .env.[NODE_ENV]         — environment-specific, committed
+ *   4. .env                    — base, optional, NOT committed
  *
- * Loading order (mirrors Next.js conventions):
- *   1. .env                    — base, optional, NOT committed
- *   2. .env.[NODE_ENV]         — environment-specific, committed
- *   3. .env.[NODE_ENV].local   — local overrides, NOT committed
+ * dotenv never overwrites an already-set var (no `override`), so with an
+ * array of paths the first file to define a var wins — hence most-specific
+ * first. This is what lets `DATABASE_URL=… pnpm db:load` target another DB.
  */
 function loadEnv() {
   const env = process.env.NODE_ENV ?? "development";
   const root = process.cwd();
 
-  config({ path: path.resolve(root, ".env") });
-  config({ path: path.resolve(root, `.env.${env}`), override: true });
-  config({ path: path.resolve(root, `.env.${env}.local`), override: true });
+  config({
+    path: [`.env.${env}.local`, `.env.${env}`, ".env"].map((file) => path.resolve(root, file))
+  });
 }
 
 // Skip if running inside Next.js — it already loaded the env files.
