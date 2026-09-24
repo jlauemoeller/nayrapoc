@@ -25,6 +25,16 @@ Turning this POC into a real product would require some additional work and feat
 SaaS functionality such as user and profile management, invitations, and billing and payment integration. Others
 are more specific to the product:
 
+### Proper AI tracing and logging
+
+The POC runs inference without any specific tracing or logging. That's fine here, but not adequate in
+a production use case. At a minimum we should trace API calls (eg. via Sentry or LangFuse) so we understand
+use and cost, and gain a basis for collecting data for running evals for regression tests when we discover
+poor evaluations. Since the data is ultimately unsafe (it originates from users) we should also take
+extra care to guard against prompt injection (the currently used model does a lot of heavy lifting
+already) and perhaps evaluate for other kinds of off-TOS use (eg. inappropriate content), which, if
+left unfiltered can cause API access to be revoked.
+
 ### Allow discussions of decisions
 
 The POC only showcases a comment / discussion feature for assumptions, but a real product should also
