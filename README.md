@@ -13,6 +13,12 @@ Decisions can be assigned a future Review-By date to help the team remember to r
 decision states (_proposed_, _rejected_, _active_, and _retired_) signals the current relevance of a decision,
 allowing everyone to understand which are still in effect, and which purely of historical importance.
 
+![A project](doc/project.png)
+
+![A decision](doc/decision.png)
+
+![An assumption](doc/assumption.png)
+
 ## Next steps
 
 Turning this POC into a real product would require some additional work and features. Some are very standard
