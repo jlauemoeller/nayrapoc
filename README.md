@@ -1,8 +1,93 @@
 # Nayra
 
-Nayra is a Proof-of-Concept implementation of a _Decision Journal_ providing project teams with a simple way to record their decisions and assumptions. Decisions can be assigned a future Review-By date to help the team remember to revisit past choices. Decision states (_proposed_, _rejected_, _active_, and _retired_) signals the current relevance of a decision, allowing everyone to understand which are still in effect, and which purely of historical importance.
+Nayra is a Proof-of-Concept implementation of a _Decision Journal_ for teams.
 
-The purpose of this Proof-of-Concept was to further increase my working knowledge of TypeScript, React, and Next.js by exploring and evaluating a few ideas:
+It provides teams with a simple way to record their decisions and assumptions as they work on their project. Each
+decision has a rationale and a number of assumptions that it relies on. Team members can discuss these assumptions
+by leaving comments, and AI is then used to evaluate whether the rationale for the assumption adequately addresases
+the concerns raised. Inference runs whenever the rationale is changed, or when comments are updated, and
+provides an always-current evalaution of the validity of the rationale. This can help the team spot and understand
+weaknesses in the rationale and avoid false assumptions.
+
+Decisions can be assigned a future Review-By date to help the team remember to revisit past choices. Additionally,
+decision states (_proposed_, _rejected_, _active_, and _retired_) signals the current relevance of a decision,
+allowing everyone to understand which are still in effect, and which purely of historical importance.
+
+## Next steps
+
+Turning this POC into a real product would require some additional work and features. Some are very standard
+SaaS functionality such as user and profile management, invitations, and billing and payment integration. Others
+are more specific to the product:
+
+### Allow discussions of decisions
+
+The POC only showcases a comment / discussion feature for assumptions, but a real product should also
+make this available for decisions - teams will want to discuss their decisions before committing to
+them. Here it would be useful to use AI to summarize the discussion thread and evaluate the
+overall sentiment. Sometimes discussions run over multiple platforms -- eg. a decision may have its
+roots in a discussion that took place on a related GitHub issue. It would be useful to allow
+references to this discussion and use AI to summarize that part of it, then show that as background
+information. See also "Integrations" below.
+
+### Allow attachments
+
+While the BlockNote editor used in the POC does allow images to be embedded into rationales, it would
+be useful to provide a real attahcment feature where users can add eg. PDF documents as background
+information. These should be included in the semantic search (see below) and it would also be useful
+to use AI to summarize their contents and how they are relevant for the rationale / discussion and then
+display this summary alongside the attachment. This makes it faster for team members to quickly form
+an overview of the situation.
+
+### Semantic search
+
+The amount of decisions, assumptions, and comments will quickly run up in any serious use case and users
+will need away to search across all of these. A semantic search functionality using embeddings in vector
+database would provide an effective global full text search and could be made available in a top-level
+search bar. However, semantic search could also be used to find and surface related decisions and assumptions
+in the UI. Since most projects tend to revisit decisions about the same area of the project many times
+over its lifetime, I think it would be very useful to automatically surface e.g. related decisions or
+similar assumptions, and use these with AI to extract and present the essence of past decisons. As an
+example, when writing the rationale for a new assumption, AI might be able to point out that a similar
+assumption was discussed a year ago and found not to be sound at that time.
+
+### Decision Quality Assurance
+
+AI could be used to help raise decision quality by evaluating rationales for readability, comprehension,
+and implicit assumptions. Another helpful evaluation would be to find past, but still active,
+decisions that appear to be in conflict with the new proposed decision: this would help surface
+potential problems to the team and assist in situations where the institutional knowledge of _why_
+something is as it is is lost.
+
+### API and AI tool support
+
+As more and more development is handed over to autonomous agents, so are core decisions and assumptions.
+It would be very useful to have these recorded in a decision journal for both human developers and
+as part of the memory layer for agents. Adding an API to the application would enable this sort of
+co-work by letting agents use skill and tools to interact with the decision journal. This would be
+especially useful if the semantic search mentioned above was also exposed over the API so agents
+like Claude and Codex can use the decision journal as a knowledge base when researching solutions.
+
+### Integrations
+
+Applications such as this are rarely used in isolation. It should integrate with platforms such
+as Github and Linear for easy reference to code or issues. AI could be used to evaluate alignment
+with issue descriptions, or whether assumptions about existing code appear sound and well founded.
+
+### Decision Review
+
+Not all decisions end up being the right ones, however much they seemed so at the time they were
+made. Some was always wrong, others no longer match the product or the requirements. It would
+be useful to have a more well-defined mechanism to identify and mark these, especially so that
+humand developers and AI agents can more accurately determine whether a given decision still
+holds or can be disregarded. Supporting this use case would require a review mechanism for
+active decisions where relevant ones are picked and brought to the team's assumption. AI could
+be used both for the selection process, but also for a "pre-evaluation" step where the the
+agent essentially provides a review based on related, later decisions, etc.
+
+## Purpose
+
+The purpose of this Proof-of-Concept was to further increase my working knowledge of TypeScript, React, and Next.js
+by exploring and evaluating a few ideas:
 
 - A layered architecture for Next.js apps
 - Errors as values (instead of exceptions)
@@ -11,9 +96,10 @@ The purpose of this Proof-of-Concept was to further increase my working knowledg
 - Type-safe side-loading
 - Simple, policy-based authorization
 
-The outcome is a simple, but fully functional web application deployed in demo form [https://nayrapoc.iteray.com](https://nayrapoc.iteray.com) -- and a significant upgrade of my Typescript, React, and Next.js knowledge.
+The outcome is a simple, but fully functional web application deployed in demo form [https://nayrapoc.iteray.com](https://nayrapoc.iteray.com)
+-- and a significant upgrade of my Typescript, React, and Next.js knowledge.
 
-## Layered Architecture
+### Layered Architecture
 
 I wanted to experiment with how to structure a React/Next.js application and decided to partition it into four layers; going from furthest back (closest to the database) to front-end, I landed on:
 
@@ -24,7 +110,7 @@ I wanted to experiment with how to structure a React/Next.js application and dec
 
 **Conclusion** - The architecture worked well and helped place responsibility in the code base. It does lead to some boilerplate when new models are introduced since a corresponding model, repository, and service implementation must also be added, along with, in many cases, accompanying actions.
 
-## Errors as Values
+### Errors as Values
 
 Rather than reaching for exceptions to signal failure, I wanted to explore modeling errors as ordinary return values so failures live in a function's type signature. Coming from Elixir, this is familiar territory: the `{:ok, value}` / `{:error, reason}` tagged tuple is the same idea, and `Result<T, E>` (here via the [neverthrow](https://github.com/supermacro/neverthrow) library, which borrows heavily from Rust ideas) is essentially its statically-typed cousin. The payoff over `throw` in TypeScript is very concrete: TypeScript has no checked exceptions, so a thrown error is invisible to the type system and a `catch` clause hands you `unknown`. A `Result` puts the error type right in the signature, and the compiler then forces every caller to deal with it.
 
@@ -76,7 +162,7 @@ function camelizeKey<T extends string>(key: T): SnakeToCamel<T> {
 
 Finally, I had to take care to ensure that any `err(...)` returned from a transaction ultimately leave as an exception as Drizzle won't initiate a database roll back otherwise. This is handled by the function `awaitTransactionResult` which starts and encapsulates the Drizzle transaction and converts from result, to exception, and back again.
 
-## UI Components
+### UI Components
 
 I wanted to explore building a React UI based on the popular [shadcn](https://ui.shadcn.com/) components and see how easy it would be to adopt additional Radix-based components. I picked [DiceUI](https://diceui.com/) as the secondary library because it offers a range of useful components, is well-documented, and fits well with shadcn. I also included [BlockNote](https://www.blocknotejs.org/) as the editor for project descriptions, decision rationales, etc. This component is React-ready but not part of the Radix family. It provides sophisticated Notion-like documents that significantly enrich the UI and project utility.
 
@@ -84,13 +170,13 @@ I wanted to explore building a React UI based on the popular [shadcn](https://ui
 
 Both shadcn and Dice vendor their components into the source tree; this is both a blessing and a curse: because the code is vendored you can tweak it to your needs, but in doing so you run the risk of complicating the addition of future components, if they rely on later versions of your tweaked components. Another issue I ran into a few times was that shadcn doesn't specify which version of Radix its components expect and on a few occasions these came out of lock step and required manual intervention. This would typically happen when a component added early in the project implicitly depended on a version of a Radix component that was then updated by a later addition. It wasn't a big issue, but something to be aware of.
 
-## Drizzle as the Database Layer
+### Drizzle as the Database Layer
 
 In my experience, many high-level ORMs do too much in an effort to appear magical and easy to use. They pave over the very real differences between the object-oriented paradigm and the relational one. In doing so they make it hard to write queries that take advantage of the database's query engine, skew database design, and inadvertently invite n+1 loads through "magic" side-loading of references. I prefer a thinner layer that provides more direct control and leaves it up to the application to map between the two paradigms. In this project I chose [Drizzle](https://orm.drizzle.team/) which fits very well with this philosophy; while it does provide a degree of high-level query building it doesn't "hide the machine" and offers good support for hand-written joins at the DSL level.
 
 **Conclusion** - Drizzle worked very well and was easy to learn. It doesn't support some advanced PostgreSQL syntax, but this can be alleviated using the `sql` "macro". Documentation is fair and I didn't feel like I had to fight the library.
 
-## Type-safe Side-loading
+### Type-safe Side-loading
 
 One of the great promises of statically typed languages is that you can leverage the type system to prevent whole classes of logical errors. In this project, I wanted to explore ways to let functions and components signal what side-loaded information they require through their type signatures. As an example, a component that displays a `Decision` along with creator information would also need the corresponding creator (a `User` record). There are several ways to solve this; sometimes the caller performs two loads, sometimes the component issue an extra load for the additional information required, and sometimes specialized loading functions load all information at once. The latter is usually necessary if the information is displayed in bulk.
 
@@ -165,7 +251,7 @@ class DecisionRepository {
 
 **Conclusion** - The idea worked quite well and the type-based loading contexts made it very easy to understand the data needs of components, and made refactoring easier. The current implementation naturally leads to a plethora of loading contexts as combinations of side-loaded types grow, and it is worth exploring if the mechanism can be implemented in a different way.
 
-## Policy-based Authorization
+### Policy-based Authorization
 
 I wanted to explore a simple policy-based authorization mechanism where policies related to specific model objects (eg. "user can create new projects") are co-located in a simple policy file which exports them as pure and easily tested functions:
 
@@ -179,7 +265,7 @@ I have used something similar on other projects and have found it to be simple t
 
 **Conclusion** - The model worked well for the project and was easy to use with Next.js.
 
-## Authentication
+### Authentication
 
 Authentication uses **NextAuth v4** with JWT sessions (no server-side sessions table). Login is passwordless: the user enters their email, NextAuth sends a magic link, and clicking it establishes the session.
 
@@ -192,7 +278,7 @@ A few notable observations:
 
 **Conclusion** - NextAuth v4 covered the magic-link flow well, but bending it onto a pre-existing schema took a custom adapter and some care around lazy initialization to keep build and CLI scripts from tripping over missing env vars.
 
-## AI Disclosure
+### AI Disclosure
 
 Claude Code was used as a paring partner throughout the project, and provided assistance with concrete TypeScript or Next.js difficulties and test implementation. I instructed Claude to behave as a mentor and gave it an honest characterization of my current TypeScript and Next.js experience. To help it draw upon my existing knowledge when explaining concepts, I told it about my significant experience from other platforms such as Elixir, Ruby, and JavaScript.
 
@@ -200,16 +286,16 @@ Claude wrote most of the utility scripts for dumping and loading the demo databa
 
 **Conclusion** - Framing Claude as a pairing partner rather than a "coding agent" proved a significant enabler. I felt like I was in the driver's seat and _learned_ rather than _observed_. This, to me, is the difference between _AI assisted_ and _AI driven_ development and was very enjoyable. I would not have been able to go from idea to final POC in just a few weeks without the ability to ask deep questions about TypeScript's type system or Next.js and would instead have spent much more time trawling through online documentation.
 
-## Data Model
+### Data Model
 
 - An `Account` (team) has many `Users` and `Projects`
 - Every `Project` has a creator (`User`) who initiated the project.
 - A `Project` has zero or more `Decisions`, each created by a `User`.
 - A `Decision` has zero or more `Assumptions`, each created by a User. Decisions can be given a review-by date and has a state that indicates its current standing (_proposed_, _rejected_, _active_, _retired_)
 
-## Prerequisites
+### Prerequisites
 
-- Node.js 20+
+- Node.js 20.9+ (`.tool-versions` pins the version used in development)
 - pnpm
 - PostgreSQL running locally
 - Docker (for Minio object storage and Mailpit email capture)
@@ -236,6 +322,8 @@ Edit each file with the appropriate values:
 - `NEXTAUTH_URL` — `http://localhost:3000`
 - `OBJECT_STORAGE_*` — for the local Minio from step 3: endpoint `http://localhost:9000`, bucket `nayra-dev` (or `nayra-test` for test), credentials matching `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`
 - `EMAIL_SERVER_*` — for the local Mailpit from step 5: host `localhost`, port `1025`, any non-empty user/password
+- `EMAIL_FROM` — sender address for magic-link emails (the example default is fine locally)
+- `ANTHROPIC_API_KEY` — used by the background job that evaluates assumption rationales. Only needed in the dev file; the tests stub the model. Without it the app runs, but evaluation jobs fail
 
 ### 3. Set up object storage (Minio)
 
@@ -266,6 +354,12 @@ pnpm db:dev:setup   # creates nayra_dev, runs migrations, seeds data
 pnpm db:test:setup  # creates nayra_test, runs migrations, seeds data
 ```
 
+Optionally, load the demo data from `db-dump.json` into the dev DB (destructive: truncates the domain tables first):
+
+```bash
+pnpm db:load
+```
+
 ### 5. Set up local email capture (Mailpit)
 
 Login uses magic-link emails, so the dev server needs an SMTP endpoint. Mailpit captures outgoing mail without real delivery:
@@ -289,7 +383,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Tests require a running PostgreSQL instance with `nayra_test` set up (step 4) and Minio with the `nayra-test` bucket (step 3) — the storage integration tests skip themselves if `OBJECT_STORAGE_*` is unset, but fail if it points at a missing bucket.
 
 ```bash
-pnpm vitest run        # run all tests once
+pnpm test:run          # run all tests once
 pnpm vitest run <path> # run a single test file
 pnpm test              # run in watch mode
 ```
@@ -297,7 +391,7 @@ pnpm test              # run in watch mode
 ## Common Commands
 
 ```bash
-pnpm build        # Build for production (see note below)
+pnpm build        # Build for production
 pnpm lint         # Run ESLint
 pnpm typecheck    # tsc --noEmit
 
@@ -305,5 +399,3 @@ pnpm db:generate  # Generate SQL migrations from schema changes
 pnpm db:migrate   # Apply pending migrations to dev DB
 pnpm db:studio    # Open Drizzle Studio (visual DB browser)
 ```
-
-> **Note on `pnpm build`:** the NextAuth route is evaluated during page-data collection, so a production build requires the full auth and email environment (`NEXTAUTH_SECRET`, `EMAIL_SERVER_*`, …) to be present — otherwise it fails after compiling. `pnpm dev`, `pnpm typecheck`, and the test suite are unaffected.
