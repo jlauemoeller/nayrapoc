@@ -4,6 +4,8 @@ import { generateText, LanguageModel, Output, Instructions } from "ai";
 import { asMarkdown } from "@/lib/services/blockDocumentMarkdown";
 import { AssumptionCommentService } from "./assumptionCommentService";
 import { anthropic } from "@ai-sdk/anthropic";
+import { DbConnection } from "@/lib/db/connection";
+import { db } from "@/lib/db";
 
 export const evaluationResultSchema = z.object({
   rating: z.enum(rationaleAiRatings),
@@ -65,9 +67,10 @@ function summarizationPrompt(evaluations: EvaluationResult[]) {
 export class AssumptionEvaluationService {
   static async evaluateAssumption(
     assumption: Assumption,
+    connection: DbConnection = db,
     model: LanguageModel = defaultModel()
   ): Promise<EvaluationResult> {
-    const comments = await AssumptionCommentService.listForAssumptionWithCreatorAndResolver(assumption.id);
+    const comments = await AssumptionCommentService.listForAssumptionWithCreatorAndResolver(assumption.id, connection);
     const unresolved = comments.filter((comment) => comment.resolvedAt === undefined);
 
     const input = {
@@ -86,13 +89,10 @@ export class AssumptionEvaluationService {
     return await this.evaluateRationale(input, model);
   }
 
-  private static async evaluateRationale(
-    input: EvaluationInput,
-    model: LanguageModel = defaultModel()
-  ): Promise<EvaluationResult> {
+  private static async evaluateRationale(input: EvaluationInput, model: LanguageModel): Promise<EvaluationResult> {
     const evaluations = await Promise.all(
       input.comments.map(async (comment) => {
-        return await this.evaluateRationaleAgainstSingleComment(input.title, input.rationale, comment.body);
+        return await this.evaluateRationaleAgainstSingleComment(input.title, input.rationale, comment.body, model);
       })
     );
 
@@ -120,7 +120,7 @@ export class AssumptionEvaluationService {
     title: string,
     rationale: string,
     comment: string,
-    model: LanguageModel = defaultModel()
+    model: LanguageModel
   ): Promise<EvaluationResult> {
     const prompt = singleCommentEvaluationPrompt(title, rationale, comment);
 

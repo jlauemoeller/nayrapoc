@@ -12,7 +12,7 @@ export async function evaluateAssumption(
   const assumption = await AssumptionService.get(assumptionId, connection);
 
   if (assumption) {
-    const evaluation = await AssumptionEvaluationService.evaluateAssumption(assumption);
+    const evaluation = await AssumptionEvaluationService.evaluateAssumption(assumption, connection);
 
     const result = await AssumptionService.update(
       assumptionId,
