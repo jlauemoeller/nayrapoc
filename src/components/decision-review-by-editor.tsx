@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ClearIcon } from "@/components/icons";
 import { DatePicker } from "@/components/date-picker";
 import { Decision } from "@/lib/models/decision";
 import { format } from "date-fns";
