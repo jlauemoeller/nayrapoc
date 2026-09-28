@@ -26,7 +26,7 @@ export function ProjectPreviewItem({ project, counts }: ProjectPreviewItemProps)
               {counts?.retired > 0 && <Badge variant="outline">{counts.retired} retired</Badge>}
               {counts && counts.total > 1 ?
                 " decisions"
-              : counts.total == 1 ?
+              : counts && counts.total == 1 ?
                 " decision"
               : "No decisions yet"}
             </span>
