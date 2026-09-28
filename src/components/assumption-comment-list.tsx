@@ -56,7 +56,7 @@ export function AssumptionCommentList({ actor, assumption, initialComments }: As
       {editable ?
         <div className="border rounded-lg p-4 bg-muted">
           <h3 className="mb-2">Leave a Comment</h3>
-          <AssumptionCommentEditor onSubmit={handleCreate} className="h-full bg-white" />
+          <AssumptionCommentEditor onSubmit={handleCreate} className="h-full bg-white min-h-64" />
         </div>
       : ""}
     </div>
