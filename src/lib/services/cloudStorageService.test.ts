@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CloudStorageService } from "@lib/services/cloudStorageService";
 
-const minioConfigured = !!process.env.OBJECT_STORAGE_ENDPOINT && !!process.env.OBJECT_STORAGE_BUCKET;
+const storageConfigured = !!process.env.OBJECT_STORAGE_ENDPOINT && !!process.env.OBJECT_STORAGE_BUCKET;
 
 describe("CloudStorageService", () => {
   describe("keyBelongsToAccount", () => {
@@ -19,7 +19,7 @@ describe("CloudStorageService", () => {
   });
 
   // These validation paths short-circuit before any network/config access, so they run
-  // without Minio configured.
+  // without object storage configured.
   describe("presignUpload validation", () => {
     it("rejects unsupported content types", async () => {
       const result = await CloudStorageService.presignUpload({
@@ -62,7 +62,7 @@ describe("CloudStorageService", () => {
     });
   });
 
-  describe.skipIf(!minioConfigured)("presignUpload (integration)", () => {
+  describe.skipIf(!storageConfigured)("presignUpload (integration)", () => {
     it.each([
       { contentType: "image/webp", ext: "webp" },
       { contentType: "video/mp4", ext: "mp4" },
@@ -86,7 +86,7 @@ describe("CloudStorageService", () => {
       expect(result.isOk()).toBe(true);
     });
 
-    it("round-trips an upload and delete against Minio", async () => {
+    it("round-trips an upload and delete against object storage", async () => {
       const accountId = `test-${Date.now()}`;
       const body = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 

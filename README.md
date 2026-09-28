@@ -314,7 +314,7 @@ Claude wrote most of the utility scripts for dumping and loading the demo databa
 - Node.js 20.9+ (`.tool-versions` pins the version used in development)
 - pnpm
 - PostgreSQL running locally
-- Docker (for Minio object storage and Mailpit email capture)
+- Docker (for SeaweedFS object storage and Mailpit email capture)
 
 ## Getting Started
 
@@ -336,32 +336,22 @@ Edit each file with the appropriate values:
 - `DATABASE_URL` — `postgres://localhost:5432/nayra_dev` (or `nayra_test` for test)
 - `NEXTAUTH_SECRET` — generate with `openssl rand -base64 32`
 - `NEXTAUTH_URL` — `http://localhost:3000`
-- `OBJECT_STORAGE_*` — for the local Minio from step 3: endpoint `http://localhost:9000`, bucket `nayra-dev` (or `nayra-test` for test), credentials matching `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`
+- `OBJECT_STORAGE_*` — for the local SeaweedFS from step 3: endpoint `http://localhost:9000`, bucket `nayra-dev` (or `nayra-test` for test), access key `admin` / secret `12345678` (from `local/seaweedfs/s3.json`)
 - `EMAIL_SERVER_*` — for the local Mailpit from step 5: host `localhost`, port `1025`, any non-empty user/password
 - `EMAIL_FROM` — sender address for magic-link emails (the example default is fine locally)
 - `ANTHROPIC_API_KEY` — used by the background job that evaluates assumption rationales. Only needed in the dev file; the tests stub the model. Without it the app runs, but evaluation jobs fail
 
-### 3. Set up object storage (Minio)
+### 3. Set up object storage (SeaweedFS)
 
-Image uploads (and the storage integration tests) need an S3-compatible store. Run Minio locally:
-
-```bash
-docker run -d --name minio -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=admin -e MINIO_ROOT_PASSWORD=12345678 \
-  minio/minio server /data --console-address ":9001"
-```
-
-Create the dev and test buckets and allow anonymous downloads (uploaded images are served via public URLs):
+Image uploads (and the storage integration tests) need an S3-compatible store. Run SeaweedFS locally:
 
 ```bash
-docker exec minio sh -c '
-  mc alias set local http://localhost:9000 admin 12345678 &&
-  mc mb local/nayra-dev local/nayra-test &&
-  mc anonymous set download local/nayra-dev &&
-  mc anonymous set download local/nayra-test'
+docker compose -f local/docker-compose.yml up -d
 ```
 
-The Minio console is available at [http://localhost:9001](http://localhost:9001).
+This starts SeaweedFS in single-process `weed mini` mode with the S3 API on [http://localhost:9000](http://localhost:9000). It creates the `nayra-dev` and `nayra-test` buckets on first start, and `local/seaweedfs/s3.json` grants anonymous read access (uploaded images are served via public URLs). Data is kept in `local/data/seaweedfs/`.
+
+The SeaweedFS admin UI is available at [http://localhost:23646](http://localhost:23646).
 
 ### 4. Set up the databases
 
@@ -396,7 +386,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Running Tests
 
-Tests require a running PostgreSQL instance with `nayra_test` set up (step 4) and Minio with the `nayra-test` bucket (step 3) — the storage integration tests skip themselves if `OBJECT_STORAGE_*` is unset, but fail if it points at a missing bucket.
+Tests require a running PostgreSQL instance with `nayra_test` set up (step 4) and SeaweedFS with the `nayra-test` bucket (step 3) — the storage integration tests skip themselves if `OBJECT_STORAGE_*` is unset, but fail if it points at a missing bucket.
 
 ```bash
 pnpm test:run          # run all tests once

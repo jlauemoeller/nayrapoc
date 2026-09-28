@@ -1,31 +1,20 @@
-version: "3"
 services:
-  minio:
-    image: minio/minio
-    container_name: minio
+  seaweedfs:
+    # Pinned: bump deliberately after checking the release notes.
+    image: chrislusf/seaweedfs:4.47
+    container_name: seaweedfs
     ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=12345678
-      - MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:3000
+      # S3 API (8333 in the container) on host port 9000, matching OBJECT_STORAGE_ENDPOINT.
+      - "127.0.0.1:9000:8333"
+      # Admin UI
+      - "127.0.0.1:23646:23646"
     volumes:
-      - ./data/minio:/data
-    command: server /data --console-address ":9001"
-
-  minio-init:
-    image: minio/mc
-    depends_on:
-      - minio
-    environment:
-      - MINIO_BUCKET=${OBJECT_STORAGE_BUCKET:-nayra}
-    entrypoint: >
-      /bin/sh -c "
-      until /usr/bin/mc alias set local http://minio:9000 admin 12345678 >/dev/null 2>&1; do
-        echo 'waiting for minio...'; sleep 1;
-      done;
-      /usr/bin/mc mb --ignore-existing local/$$MINIO_BUCKET;
-      /usr/bin/mc anonymous set download local/$$MINIO_BUCKET;
-      echo 'minio bucket ready';
-      "
+      - ./data/seaweedfs:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    # `weed mini` runs master, volume, filer and S3 gateway in one process, and
+    # creates the listed buckets on startup if they don't exist.
+    command: >
+      mini -dir=/data
+      -bucket=nayra-dev,nayra-test
+      -s3.config=/etc/seaweedfs/s3.json
+      -s3.allowedOrigins=http://localhost:3000

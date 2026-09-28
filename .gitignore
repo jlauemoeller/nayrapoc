@@ -53,8 +53,8 @@ next-env.d.ts
 .claude
 CLAUDE.md
 
-# Minio data files
-local/data/minio/
+# Local object storage data (SeaweedFS; leftover MinIO data too)
+local/data/*/
 
 # scp'ed to server
 db-dump.json
